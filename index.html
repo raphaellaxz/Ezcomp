@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ezcomp</title>
+<script src="vexflow-debug.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1"> 
+<link rel="stylesheet" type="text/css" href="mystyle.css">
+
+<!-- shim -->
+	<script src="./inc/shim/Base64.js" type="text/javascript"></script>
+	<script src="./inc/shim/Base64binary.js" type="text/javascript"></script>
+	<script src="./inc/shim/WebAudioAPI.js" type="text/javascript"></script>
+	<script src="./inc/shim/WebMIDIAPI.js" type="text/javascript"></script>
+
+	<!-- jasmid package -->
+	<script src="./inc/jasmid/stream.js"></script>
+	<script src="./inc/jasmid/midifile.js"></script>
+	<script src="./inc/jasmid/replayer.js"></script>
+
+<!-- midi.js package -->
+	<script src="./js/midi/audioDetect.js" type="text/javascript"></script>
+	<script src="./js/midi/gm.js" type="text/javascript"></script>
+	<script src="./js/midi/loader.js" type="text/javascript"></script>
+	<script src="./js/midi/plugin.audiotag.js" type="text/javascript"></script>
+	<script src="./js/midi/plugin.webaudio.js" type="text/javascript"></script>
+	<script src="./js/midi/plugin.webmidi.js" type="text/javascript"></script>
+	<script id="midi_player_script" src="./js/midi/player.js" type="text/javascript"></script>
+	<script src="./js/midi/synesthesia.js" type="text/javascript"></script>
+
+<!-- utils -->
+	<script src="./js/util/dom_request_xhr.js" type="text/javascript"></script>
+	<script src="./js/util/dom_request_script.js" type="text/javascript"></script>
+
+</head>
+<body>
+	<div class="navbar">
+  <div class="dropdown">
+  	<button class="dropbtn">Files 
+      <i class="fa fa-caret-down"></i>
+    </button>
+  	<div class="dropdown-content">
+  	<button  id="Importbtn">Imports	
+  		<input type="file" accept="audio/midi"/>
+  	</button>
+
+  	<button  id="Savebtn" Onclick="Save()">Save	
+  	</button>
+
+  	</div>
+  </div>
+  <a href="#news">Edit</a>
+  <div class="dropdown">
+    <button class="dropbtn">Dropdown 
+      <i class="fa fa-caret-down"></i>
+    </button>
+    <div class="dropdown-content">
+      <a href="#">Link 1</a>
+      <a href="#">Link 2</a>
+      <a href="#">Link 3</a>
+    </div>
+  </div> 
+</div>
+<div class="navbar">
+	<button class="inputbtn" id="1notebtn">1<img src="./music_notes_img/1t.png"></button>
+	<button class="inputbtn" id="2notebtn">2<img src="./music_notes_img/2t.png" ></button>
+	<button class="inputbtn act" id="4notebtn">4<img src="./music_notes_img/4t.png"></button>
+	<button class="inputbtn" id="8notebtn">8<img src="./music_notes_img/8t.png"></button>
+	<button class="inputbtn" id="16notebtn">6<img src="./music_notes_img/16t.png"></button>
+	<button class="inputbtn" id="32notebtn">3<img src="./music_notes_img/32t.png"></button>
+	<button class="inputbtn" id="restbtn">r<img src="./music_notes_img/rest.png"></button>
+
+</div>
+	<div id="FileDrop">
+		<div id="Text">
+			Drop a midi file here
+		</div>
+		<input type="file" accept="audio/midi">
+	</div>
+
+	<div id="boo"></div>
+
+	<form name="Form1">
+	POSX: <input type="text" name="posx"><br>
+	POSY: <input type="text" name="posy"><br>
+	key:  <input type="text" name="key"><br>
+	</form>
+
+	
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+<script type="text/javascript">
+
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function indexOf(member, startFrom) {
+    /*
+    In non-strict mode, if the `this` variable is null or undefined, then it is
+    set to the window object. Otherwise, `this` is automatically converted to an
+    object. In strict mode, if the `this` variable is null or undefined, a
+    `TypeError` is thrown.
+    */
+    if (this == null) {
+      throw new TypeError("Array.prototype.indexOf() - can't convert `" + this + "` to object");
+    }
+
+    var
+      index = isFinite(startFrom) ? Math.floor(startFrom) : 0,
+      that = this instanceof Object ? this : new Object(this),
+      length = isFinite(that.length) ? Math.floor(that.length) : 0;
+
+    if (index >= length) {
+      return -1;
+    }
+
+    if (index < 0) {
+      index = Math.max(length + index, 0);
+    }
+
+    if (member === undefined) {
+      /*
+        Since `member` is undefined, keys that don't exist will have the same
+        value as `member`, and thus do need to be checked.
+      */
+      do {
+        if (index in that && that[index] === undefined) {
+          return index;
+        }
+      } while (++index < length);
+    } else {
+      do {
+        if (that[index] === member) {
+          return index;
+        }
+      } while (++index < length);
+    }
+
+    return -1;
+  };
+}
+
+
+
+
+
+/* start of VexFlow calls*/
+
+
+VF = Vex.Flow;
+
+// Create an SVG renderer and attach it to the DIV element named "boo".
+var div = document.getElementById("boo");
+var renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
+var renderWidth = 2000;
+
+// Configure the rendering context.
+renderer.resize(renderWidth, 1600);
+var context = renderer.getContext();
+context.setFont("Arial", 10, "").setBackgroundFillStyle("#eed");
+var svg = context.svg;
+var pt = svg.createSVGPoint();
+var selected = [];
+var keyarray = ["c","d","e","f","g","a","b"];
+var twelvekeyarray = ["c","c#","d","d#","e","f","f#","g","g#","a","a#","b"];
+var tempoarray = [1,2,4,8,16,32,64,128];
+var staves = [];//list of bars
+var notes = [];//list of lists of notes in each bar
+notes[0] = [];
+notes[0] = [
+new VF.StaveNote({clef: "treble", keys: ["D/4","F#/4","a/4"], duration: "8" }),
+new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "8" }),
+new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "2" }),
+new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "4" })];
+// for(var i=0;i<4;i++){
+// notes[0].push(new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "q" }));
+// }
+
+var voices = [];//list of vocie
+var beams = [];//list of beams
+var durationstate = "4";//the duration of input notes, default as quartet
+var pitchstate = 4;//the pitch of input notes, default at 4th
+var clefstate = "treble";
+var bartempo = [4,4];
+var typeplace = [notes.length-1,notes[notes.length-1].length-1];//default point to the last note
+var reststate=false;
+var insertstate=true;
+var playstate = false;
+var restkey = ["b/4"];
+var ctrlkey = false;
+
+var player = MIDI.Player;
+
+
+
+
+// Create a stave of width 400 at position 10, 40 on the canvas.
+var stave = new VF.Stave(10, 40, 500);
+
+// Add a clef and time signature.
+stave.addClef("treble").addTimeSignature("4/4");
+staves.push(stave);
+
+// Connect it to the rendering context and draw!
+stave.setContext(context).draw();
+
+
+var voice = new VF.Voice({num_beats: 4,  beat_value: 4});
+voice.addTickables(notes[0]);
+voices.push(voice);
+var formatter = new VF.Formatter().joinVoices([voices[0]]).format([voices[0]], staves[0].width*0.8);
+voice.draw(context,stave);
+synnotesnselected();
+for(var i=0; i<selected.length;i++){
+	setAll(selected[i], 0);
+}
+
+//disable the default use of arrow and spacebar 
+$(document).ready(function(){
+
+	window.addEventListener("keydown", function(e) {
+    // space and arrow keys
+    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+        e.preventDefault();
+    }
+}, false);
+//
+
+$(svg).click(function(e) {
+	if(!svg){
+		return -1;
+	}
+	var list = document.getElementsByClassName("dropdown");
+	var arr = Array.prototype.slice.call(list);
+	arr.forEach(function(e){
+		e.classList.remove("act");
+	})
+	console.log(e);
+	var dim = svg.getBoundingClientRect();
+	var x = e.clientX-dim.left;
+	var y = e.clientY - dim.top;
+    document.Form1.posx.value = x;
+    document.Form1.posy.value = y;
+    var i = checkselected(x,y);
+    //console.log(i);
+    singleclickselected(i);
+    drawagain();
+});
+$("body").keydown(function(e){
+	document.Form1.key.value = e.which;
+
+		switch(e.which){
+			case 37://ArrowLeft
+				if(selectedcontain1() != false){
+					var list = selectedcontain1();
+					if(list[0] == 0 && list[1] ==0) break;
+					if(list[1] == 0 && list[0]>0){
+						selected[list[0]][list[1]]=0;
+						selected[list[0]-1][selected[list[0]-1].length-1] = 1;
+					}else{
+						selected[list[0]][list[1]]=0;
+						selected[list[0]][list[1]-1]=1;
+					}
+					list = selectedcontain1();
+					typeplace = [list[0],list[1]];
+					drawagain();
+				}else{
+					selected[selected.length-1][selected[selected.length-1].length-1] = 1;
+					var list = selectedcontain1();
+					typeplace = [list[0],list[1]];
+					drawagain()
+				}
+				break;
+			case 39://Arrowright
+					if(selectedcontain1() != false){
+					var list = selectedcontain1();
+					if(list[1] == selected[list[0]].length - 1){//last of bar
+						if(selected[list[0]+1]!=undefined){//not the last note of the song
+							selected[list[0]][list[1]]=0;
+							selected[list[0]+1][0] = 1;
+						}
+					}else{//not the last note
+						selected[list[0]][list[1]]=0;
+						selected[list[0]][list[1]+1]=1;
+					}
+					list = selectedcontain1();
+					typeplace = [list[0],list[1]];
+					drawagain();
+				}else{// no note selected yet 
+					typeplace = [0,0];
+					selected[0][0] = 1;
+					drawagain();
+				}
+				break;
+			case 38://Arrowup
+				if(e.ctrlKey){
+					console.log("move 8 interval up");
+					ctrlkey = true;
+				}
+				if(selectedcontain1() != false){
+					moveselectedupward();
+					drawagain();
+					ctrlkey = false;
+					break;
+					}else{
+						ctrlkey = false;
+						break;
+					}	
+			case 40://Arrowdown
+				if(e.ctrlKey){
+					console.log("move 8 interval down");
+					ctrlkey = true;
+				}
+				if(selectedcontain1() != false){
+					moveselecteddownward();
+					drawagain();
+					ctrlkey = false;
+					break;
+				}else{
+					ctrlkey = false;
+					break;
+				}
+
+			case 65:
+			case 66:
+			case 67:
+			case 68:
+			case 69:
+			case 70:
+			case 71://character A to G
+				input = e.key;
+				insertnote(input);
+				drawagain();
+			break;
+			case 49:
+				var oldelement = durationstate;
+				if(oldelement == "1") break;
+				var oldelement = document.getElementById(oldelement+"notebtn");
+				oldelement.classList.remove("act");
+				durationstate = "1";
+				var element = document.getElementById("1notebtn");
+				element.classList.add("act");
+				break;
+			case 50:
+				var oldelement = durationstate;
+				if(oldelement == "2") break;
+				var oldelement = document.getElementById(oldelement+"notebtn");
+				oldelement.classList.remove("act");
+				durationstate = "2";
+				var element = document.getElementById("2notebtn");
+				element.classList.add("act");
+				break;
+			case 52:
+				var oldelement = durationstate;
+				if(oldelement == "4") break;
+				var oldelement = document.getElementById(oldelement+"notebtn");
+				oldelement.classList.remove("act");
+				durationstate = "4";
+				var element = document.getElementById("4notebtn");
+				element.classList.add("act");
+				break;
+			case 56:
+				var oldelement = durationstate;
+				if(oldelement == "8") break;
+				oldelement = document.getElementById(oldelement+"notebtn");
+				oldelement.classList.remove("act");
+				durationstate = "8";
+				var element = document.getElementById("8notebtn");
+				element.classList.add("act");
+				break;
+			case 54:
+				var oldelement = durationstate;
+				if(oldelement == "16") break;
+				var oldelement = document.getElementById(oldelement+"notebtn");
+				oldelement.classList.remove("act");
+				durationstate = "16";
+				var element = document.getElementById("16notebtn");
+				element.classList.add("act");
+				break;
+			case 51:
+				var oldelement = durationstate;
+				if(oldelement == "32") break;
+				var oldelement = document.getElementById(oldelement+"notebtn");
+				oldelement.classList.remove("act");
+				durationstate = "32";
+				var element = document.getElementById("32notebtn");
+				element.classList.add("act");
+				break;
+			case 82:
+				reststate = !reststate;
+				if(reststate){
+					document.getElementById("restbtn").classList.add("act");
+				}else{
+					document.getElementById("restbtn").classList.remove("act");
+				}
+				break;
+			case 32: //spacebar, for playing the song
+				playstate = !playstate;
+				if(playstate)
+					PlayMIDI();
+				else
+					PauseMIDI();
+				break;
+
+
+
+		}
+});
+
+$(".dropdown").click(function(e){
+	this.classList.add("act");
+});
+
+
+});
+
+///////////////////////////////inputing part///////////////////////////////////////////////////////////
+	function insertnote(key){
+
+	 //check if the typeplace consist of a rest
+	 //console.log(notes[typeplace[0]][typeplace[1]].isRest());
+	//if it is not the last place
+		//** modify the current note or rest
+		var dset = false;
+		var dtick;
+		try{
+		var d = notes[typeplace[0]][typeplace[1]].duration;
+		}catch(e){
+			if(e.name == "TypeError"){
+				dset = true;
+				dtick = 0;
+				d = durationstate;
+				notes.push([]);
+				voices.push(new VF.Voice({num_beats: bartempo[0],beat_value: bartempo[1]}));
+				addStave();
+			}
+		}
+		try{
+		var dot = notes[typeplace[0]][typeplace[1]].getDots();
+		}catch(e){
+			if(e.code=="TypeError") dot = undefined;
+		}
+		if(dot!=undefined){
+		for(var a=0;a<dot.length;a++){
+				d+="d";
+				}
+			}
+		if(!dset) dtick = durationToTicks(d);
+		var dstick = durationToTicks(durationstate);
+		if(insertstate){
+			if((typeplace[0] == notes.length-1 && typeplace[1] == notes[notes.length-1].length-1) && !notes[typeplace[0]][typeplace[1]].isRest()){//typeplace is at the last and not a rest, insert note
+		 	var tempbar = [];
+		 	var tempnote;
+		 	if(reststate) tempnote = new VF.StaveNote({clef: clefstate ,keys:restkey ,duration: durationstate +"r"});
+		 	else tempnote = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: durationstate });
+		 	tempbar.push(tempnote);
+		 	//typeplace++
+		 	var tempvoice = new VF.Voice({num_beats: bartempo[0],beat_value: bartempo[1]});
+		 	tempvoice.addTickables(tempbar);
+			typeplace[0]++;
+			typeplace[1] = 1;
+			addStave();
+			notes.push(tempbar);
+			voices.push(tempvoice);
+			}else if(typeplace[0] == notes.length-1 && typeplace[1] == notes[notes.length-1].length-1 && notes[typeplace[0]][typeplace[1]].isRest()){// at last and is a rest,
+				if(dstick<dtick){//the chosen duration is shorter then the rest,
+						//use the input note to override the current note
+						if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: durationstate+"r"});
+						else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: durationstate });
+						notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :TickToduration(dtick-dstick) +"r"}));
+						typeplace[1]++;
+
+					}else{//use the current note to override the note
+						if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: d +"r"});	
+						else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: d});
+						typeplace[0]++;
+						typeplace[1] = 0;
+
+				}
+
+
+			}else{//not at the last
+				if(dstick<dtick){
+					if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: durationstate+"r"});
+					else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: durationstate });
+					notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :TickToduration(dtick-dstick) +"r"}));
+
+					}else{
+					if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: d +"r"});	
+					else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: d});
+					if(typeplace[1] == notes[typeplace[0]].length-1 && !dset){
+						typeplace[0]++;
+						typeplace[1] = -1;
+					}
+
+				}
+				typeplace[1]++;
+
+			}
+
+		}else{
+		if(dstick<dtick){
+			if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: durationstate+"r"});
+			else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: durationstate });
+			notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :TickToduration(dtick-dstick) +"r"}));
+
+		}else{
+
+			if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: d +"r"});	
+			else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: d});
+
+		}
+
+		}
+	}	
+
+
+
+
+function durationToTicks(d){
+	var res = 16384;
+	var dur = parseInt(d);
+	var dot = d.match(/d/g)==undefined?0:d.match(/d/g).length;
+	var result = (res / dur );
+	for(var i=0;i<dot;i++){
+		result+= dur*Math.pow(0.5,i);
+	}
+	return result;
+}
+
+
+
+//check if the given bar is already full in beats
+//param: bar : the voice of the target bar
+//output: true/false
+	function checkbarfull(bar){
+		var tickscount = 0;
+		var tempnotes = bar.getTickables();
+		var full = VF.durationToTicks(bar.time.beat_value) * bar.time.num_beats;
+		for(var i=0;i<tempnotes.length;i++){
+			tickscount+= tempnotes[i].ticks.numerator;
+		}
+		var notfill = full - tickscount;
+		console.log("bar needs" + notfill +"ticks to fill the bar");
+		return notfill==0;
+}
+
+
+
+//function to input stave with respect to wether a new row to concat
+//param: none
+//output: void
+function addStave(){
+	if(staves[0]==undefined){
+		staves[0] = new VF.Stave(10, 40, 450);
+		staves[0].addClef(clefstate).addTimeSignature(bartempo[0]+"/"+bartempo[1]);
+	}
+	var staveend = staves[staves.length-1].x+staves[staves.length-1].width;
+	if(staveend>svg.clientWidth*0.8){
+		var tempstave = new VF.Stave(staves[0].x,staves[staves.length-1].y+90+10,staves[staves.length-1].width);
+		tempstave.addClef(clefstate).addTimeSignature(bartempo[0]+"/"+bartempo[1]);
+		staves.push(tempstave);
+
+	}else{
+	staves.push(new VF.Stave(staves[staves.length-1].x+staves[staves.length-1].width,staves[staves.length-1].y,staves[staves.length-1].width));
+	}
+
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////delete notes part////////////////////////////////////////////////////////////
+
+function deleteselected(){
+	checknotesandselected();
+	for(var i=0 ;i<selected.length-1;i++){
+		for(var j=0 ; j<selected[i].length-1;j++){
+			if(selected[i][j] == 1){
+				
+			}
+		}
+	}
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////selecting notes part//////////////////////////////////////////////////////////
+
+//check note's location matched given location
+//@param:x coordinate, ycoordinate for checking
+//@output: if matched, return the index of note in array notes
+//can only check one, suppose only one note can be selected by mouse at a time
+function checkselected(x,y){
+	var beginX, endX, centerY;
+	for(var i=0; i<notes.length;i++){
+		for(var j=0;j<notes[i].length;j++){
+			try{
+			beginX = notes[i][j].getNoteHeadBeginX();
+			endX = notes[i][j].getNoteHeadEndX();
+			centerY = notes[i][j].getNoteHeadBounds().y_top;
+			if(beginX-2<x && x<endX+2 && centerY-6<y && y<centerY+6){
+				return [i,j];
+			}
+			}catch(e){
+				if(e.code="NoTickContext"){
+					console.log("bar " + (i +1) +"note "+ (j+1) +" have no tickcontext!" );
+					TooManyTickscheck();
+					voices[i].addTickables(notes[i]);
+					formatter = new VF.Formatter().joinVoices([voices[i]]).format([voices[i]],staves[i].width*0.8);
+				}
+			}
+		}
+	}
+	return -1;
+}
+
+
+
+
+//change the indexof i in array selected to 1, if i equal -1(clicked in blank space) set all items in selected to 0
+//@param:i(array)
+//output:void
+function singleclickselected(i){
+	checknotesandselected();
+	if(i==-1){
+		for(var a=0;a<selected.length;a++){
+			setAll(selected[a],0);
+		}
+		return;
+	}
+	for(var a=0;a<selected.length;a++)
+		setAll(selected[a], 0);
+		selected[i[0]][i[1]] = 1;
+		typeplace = [i[0],i[1]];
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////moving notes part////////////////////////////////////////////////////////
+
+//move all current selected notes up 1 intervel
+function moveselectedupward(){
+	checknotesandselected();
+	//loop and check for selected notes is notes or rest
+	//if it is rest, just ignore 
+	for(var i=0; i<notes.length;i++){
+		for(var j=0;j<notes[i].length;j++){
+		if(selected[i][j]==1 && !notes[i][j].isRest()){
+			var key = notes[i][j].keys;
+			var dot = notes[i][j].getDots();
+			var d = "";
+			if(dot!=undefined){
+				for(var z=0;z<dot.length;z++){
+					d+="d";
+				}
+			}
+			var n1;
+			if(ctrlkey){n1 = new VF.StaveNote({clef: notes[i][j].clef,keys: up8interval(key), duration:notes[i][j].duration + d});}
+			else{var n1 = new VF.StaveNote({clef: notes[i][j].clef,keys: up1interval(key), duration:notes[i][j].duration + d});}
+			for(var l =0;l<d.length;l++)
+				n1.addDotToAll();
+			notes[i][j] = n1;
+		}
+	}
+	}
+
+}
+//move all current selected notes down 1 interval
+
+function moveselecteddownward(){
+	checknotesandselected();
+	//loop and check for selected notes is notes or rest
+	//if it is rest, just ignore 
+	for(var i=0; i<notes.length;i++){
+		for(var j=0;j<notes[i].length;j++){
+		if(selected[i][j]==1 && !notes[i][j].isRest()){
+			var key = notes[i][j].keys;
+			var dot = notes[i][j].getDots();
+			var d = "";
+			if(dot!=undefined){
+				for(var z=0;z<dot.length;z++){
+					d+="d";
+				}
+			}
+			var n1;
+			if(ctrlkey){n1 = new VF.StaveNote({clef: notes[i][j].clef,keys: down8interval(key), duration:notes[i][j].duration + d});}
+			else{n1 = new VF.StaveNote({clef: notes[i][j].clef,keys: down1interval(key), duration:notes[i][j].duration + d});}
+			for(var l =0;l<d.length;l++)
+				n1.addDotToAll();
+			notes[i][j] = n1;
+		}
+	}
+	}
+}
+
+
+//return the array containing keys that upward by one interval
+function up1interval(key){
+	var cur,pitno;
+	var res=[];
+	for(var i=0; i<key.length;i++){
+		cur=keyarray.indexOf(key[i].slice(0,1).toLowerCase());
+		pitno = key[i].slice(key[i].length-1);
+		if(cur<keyarray.length-1){
+			cur++;
+		}else if(cur==keyarray.length-1){
+			cur=0;
+			pitno = (parseInt(pitno)+1).toString();
+		}
+		res.push(keyarray[cur]+"/"+pitno);
+	}
+	return res;
+}
+
+//return the arra containing keys that upward by 8 intervals
+function up8interval(key){
+	var cur,pitno;
+	var res=[];
+	for(var i=0; i<key.length;i++){
+		cur=keyarray.indexOf(key[i].slice(0,1).toLowerCase());
+		pitno = key[i].slice(key[i].length-1);
+		pitno = (parseInt(pitno)+1).toString();
+		res.push(keyarray[cur]+"/"+pitno);
+	}
+	return res;
+}
+
+//return the array containing keys that downward by one interval
+function down1interval(key){
+	var cur,pitno;
+	var res=[];
+	for(var i=0;i<key.length;i++){
+		cur=keyarray.indexOf(key[i].slice(0,1).toLowerCase());
+		pitno = key[i].slice(key[i].length-1);
+		if(cur>0){
+			cur--;
+		}else if(cur==0){
+			cur=keyarray.length-1;
+			pitno = (parseInt(pitno)-1).toString();
+		}
+		res.push(keyarray[cur]+"/"+pitno);
+	}
+	return res;
+}
+
+//return the arra containing keys that upward by 8 intervals
+function down8interval(key){
+	var cur,pitno;
+	var res=[];
+	for(var i=0; i<key.length;i++){
+		cur=keyarray.indexOf(key[i].slice(0,1).toLowerCase());
+		pitno = key[i].slice(key[i].length-1);
+		pitno = (parseInt(pitno)-1).toString();
+		res.push(keyarray[cur]+"/"+pitno);
+	}
+	return res;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////(Re)drawing part///////////////////////////////////////////////////////////////
+
+
+function drawagain(){
+	while (svg.lastChild) {
+    svg.removeChild(svg.lastChild);
+	};
+
+	staves.forEach(function(s){
+		s.setContext(context).draw();
+	});
+	updatestyle();
+	for(var i =0; i<voices.length;i++){
+		if(i == 42)
+			debugger;
+		if(voices[i].getTickables().length == 0){
+		try{
+		voices[i].addTickables(notes[i]);
+		}catch(e){
+			if(e.code == "BadArgument"){
+				console.log("too many ticks when call addtickables at bar " + i);
+			}
+		}
+		}
+		else{
+			voices[i]=new VF.Voice(voices[i].time);
+			try{
+			voices[i].addTickables(notes[i]);
+			}catch(e){
+				if(e.code == "BadArgument"){
+					TooManyTickscheck();
+				console.log("too many ticks when call addtickables at bar " + i);
+			}
+			}
+		}
+			try{
+				var needtofill = checkbarticksnotfill(voices[i]);
+				if(needtofill!= undefined)
+				fillvoice(i,needtofill);
+				//else if(typeof(needtofill) == "number") fillvoice(i,needtofill);
+			formatter = new VF.Formatter().joinVoices([voices[i]]).format([voices[i]],staves[i].width*0.8);
+			// if(notes[i][notes[i].length-1].getNoteHeadEndX()> (staves[i].end_x - staves[i].start_x)){
+			// 	formatter = new VF.Formatter().joinVoices([voices[i]]).format([voices[i]],staves[i].width - (notes[i][notes[i].length-1].getNoteHeadEndX()- staves[i].end_x));	
+			// }
+			}catch(err){
+				console.log(err.code);
+				if(err.code == "IncompleteVoice"){
+					if(voices[i].totalTicks.numerator != (16384/bartempo[1]*bartempo[0])){voices[i].totalTicks.numerator =16384/bartempo[1]*bartempo[0] };
+					var usedt = 0;
+					voices[i].getTickables().forEach(function(n){usedt+=n.ticks.numerator;});
+					if(voices[i].ticksUsed.numerator !=(usedt)){voices[i].ticksUsed.numerator = usedt;}
+					//fill the stave with rest
+					var needtofill = checkbarticksnotfill(voices[i]);
+					if(needtofill != undefined)
+					fillvoice(i,needtofill);
+					//else if(typeof(needtofill) == "number") fillvoice(i,needtofill);
+				}
+			}
+		// Format and justify the notes to 400 pixels.
+    	//var formatter = new VF.Formatter().joinVoices([voice[i]]).format([voice[i]], staves[i].width  );
+    	try{
+    		// debugger;
+    		// beams.push(VF.Beam.generateBeams(notes[i]));
+    		// beams[i].forEach(function(b){
+    		// 	b.setContext(context).draw();
+    		// });
+    		voices[i].draw(context, staves[i]);
+    	}catch(err){
+    		if(err.code == "UnformattedNote"){
+				// format the note again
+				formatter = new VF.Formatter().joinVoices([voices[i]]).format([voices[i]],staves[i].width);
+				voices[i].draw(context, staves[i]);
+    		}
+    	}
+	}
+}
+
+function checknotes(notesarray){
+	var tempcount =0;
+	for(var i=0;i<notesarray.length;i++){
+		tempcount += (bartempo[1] / parseInt(notesarray[i].duration));
+		console.log(tempcount);
+	}
+	return tempcount;
+}
+
+//check how many beat not filled 
+//input the check bar's voice
+//return list contain index 0: the number beats not filled, 1 the value of beats
+function checkbartemponotfill(bar){
+		var tempocount = 0;
+		var tempnotes = bar.getTickables();
+		var full = bar.time.num_beats;
+		for(var i=0; i<tempnotes.length;i++){
+			tempocount+= (4 / parseInt(tempnotes[i].duration));
+		}
+		var notfill = full - tempocount;
+		console.log("bar needs " + notfill+ "beats of value " + bar.time.beat_value);
+		return [notfill, bar.time.beat_value];
+		}
+
+//check the given bar with how many ticks not be filled
+//param:bar : the voice of the target bar
+//output:list :[number of ticks, value of ticks of one beat];
+function checkbarticksnotfill(bar){
+	//debugger;
+	var tickscount = 0;
+	var tempnotes = bar.getTickables();
+	var full = VF.durationToTicks(bar.time.beat_value) * bar.time.num_beats;
+	for(var i=0;i<tempnotes.length;i++){
+		tickscount+= tempnotes[i].ticks.numerator;
+	}
+	var notfill = full - tickscount;
+	console.log("bar needs" + notfill +"ticks to fill the bar");
+	return TickToduration(notfill);
+}
+
+//return the note value of the given tick
+//param:tick(int)
+//output: notevalue
+
+function TickToduration(tick){
+	var resolution = 16384;
+	var sdresolution = 24576;
+	var ddresolution = 28672;
+	var result;
+	//var iregular = false;
+	if(tick == resolution) result = 1;
+	else if(tick >= resolution/2){ 
+		if(tick >= ddresolution/2)	result = 2 + "dd";
+		if(tick >= sdresolution/2)	result = 2+"d";
+		if(tick == resolution/2)	result = 2;
+	}
+	else if(tick >= resolution/4){
+		if(tick >= ddresolution/4)	result = 4 + "dd";
+		if(tick >= sdresolution/4)	result = 4+"d";
+		if(tick == resolution/4)	result = 4;
+		
+	}
+	else if(tick >= resolution/8) {
+		if(tick >= ddresolution/8)	result = 8 + "dd";
+		if(tick >= sdresolution/8)	result = 8+"d";
+		if(tick == resolution/8)	result = 8;
+	}
+	else if(tick >= resolution/16) {
+		if(tick >= ddresolution/16)	result = 16 + "dd";
+		if(tick >= sdresolution/16)	result = 16+"d";
+		if(tick == resolution/16)	result = 16;
+	}else if(tick >= resolution/32){
+		if(tick >= ddresolution/32)	result = 32 + "dd";
+		if(tick >= sdresolution/32)	result = 32+"d";
+		if(tick == resolution/32)	result = 32;
+	} 
+	else if( tick >= resolution/64){
+		if(tick >= ddresolution/64)	result = 64 + "dd";
+		if(tick >= sdresolution/64)	result = 64+"d";
+		if(tick == resolution/64)	result = 64;
+	}
+
+	 return result;
+
+}
+
+
+//fillup the target bar with rest
+//param:  bar:the number of bar(index in the main lists), list: the list containing how many beat not filled and value of beat
+//output:void
+function fillvoicewithrest(bar,list){//list[0]:how many beat not fill, list[1] value
+	var beatleft = list[0];
+	if((list[0]%1)!=0){
+		var digit=list[0]%1;
+		while(digit!=0){
+			if(digit==0.75){
+				//the first 0.25 of beat
+				console.log("add 0.75 beat to bar");
+				var tempdur = list[1]/0.25;
+				var n1 = new VF.StaveNote({clef: clefstate, keys:restkey,duration: tempdur+"r" });
+				digit-=0.25;
+				beatleft-=0.25;
+				tempdur = list[1]/0.5;
+				var n2 = new VF.StaveNote({clef: clefstate, keys: restkey,duration: tempdur+"r" });
+				digit-=0.5;
+				beatleft-=0.5;
+				notes[bar].push(n1);
+				notes[bar].push(n2);
+				voices[bar].addTickable(n1);
+				voices[bar].addTickable(n2);
+			}
+			else if(digit == 0.5){
+				console.log("add 0.5 beat to bar");
+				var tempdur = list[1]/0.5;
+				var n1 = new VF.StaveNote({clef: clefstate, keys:restkey,duration: tempdur+"r" });
+				digit-=0.5;
+				beatleft-=0.5;
+				notes[bar].push(n1);
+				voices[bar].addTickable(n1);
+			}
+		}
+	}
+	for(var i =0 ; i<beatleft;i++){
+		var n1 = new VF.StaveNote({clef: clefstate, keys:restkey,duration: list[1].toString()+"r" });
+		notes[bar].push(n1);
+		console.log("add rest to the voice");
+		voices[bar].addTickable(n1);
+
+}
+}
+
+function fillvoice(bar,duration){
+	if(typeof(duration) == "number"){
+	var n1 = new VF.StaveNote({clef: clefstate, keys:restkey,"duration": duration +"r"});
+	notes[bar].push(n1);
+	try{
+	voices[bar].addTickable(n1);
+	}catch(e){
+		if(e.code == "BadArgument"){
+			voices[bar].mode = 2;
+			voices[bar].addTickable(n1);
+			voices[bar].mode = 3;
+		}
+	}
+	}else if(typeof(duration) == "string"){
+		var n1 = new VF.StaveNote({clef: clefstate, keys:restkey,"duration": duration +"r"});
+		notes[bar].push(n1);
+		try{
+			voices[bar].addTickable(n1);
+		}catch(e){
+			if(e.code == "BadArgument"){
+			voices[bar].mode = 2;
+			voices[bar].addTickable(n1);
+			voices[bar].mode = 3;
+			}
+		}
+	}
+	else{
+		var n1 = new VF.StaveNote({clef: clefstate, keys:restkey,"duration": duration[0] +"r"});
+		n1.ticks.numerator = duration[1];
+		notes[bar].push(n1);
+		try{
+		voices[bar].addTickable(n1);
+		}catch(e){
+		if(e.code == "BadArgument"){
+			voices[bar].mode = 2;
+			voices[bar].addTickable(n1);
+			voices[bar].mode = 3;
+		}
+	}
+
+	}
+}
+
+
+
+function updatestyle(){
+	checknotesandselected();
+
+	for(var i=0;i<notes.length;i++){
+		for(var j=0;j<notes[i].length;j++){
+		if(selected[i][j]==1){
+			for(var k = 0 ; k < notes[i][j].note_heads.length;k++){
+				notes[i][j].note_heads[k].style = {fillStyle:"red", strokeStyle:'red'};
+			}
+		}
+		else if(selected[i][j]==0){
+		     for(var k = 0 ; k < notes[i][j].note_heads.length;k++){
+				notes[i][j].note_heads[k].style = {fillStyle:"black",strokeStyle:'black'};
+			}
+		}
+	}
+
+	}
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////ultilities function///////////////////////////////////////////////////////////
+
+//check if notes and selected have same length
+function checknotesandselected(){
+	if(!multiarraylengthcheck(notes,selected)){
+		synnotesnselected();
+		if(selected.length == notes.length){
+			return true;
+		}
+		else{
+			throw "selected length not equal notes length error!";
+		}
+	}
+	else{
+		return true;
+	}
+}
+
+function setAll(a, v) {
+    var i, n = a.length;
+    for (i = 0; i < n; ++i) {
+        a[i] = v;
+    }
+}
+
+//return true if the two dimensional array have same lengths
+function multiarraylengthcheck(a1,a2){
+	if(a1.length == a2.length){
+		for(var i=0; i<a1.length;i++){
+			if(a1[i].length != a2[i].length){
+				console.log("multiarray checked length not equal");
+				//console.log(notes);
+				return false;
+			}
+		}
+		return true;
+	}else
+	return false;
+
+}
+
+//makes notes and selected have same length
+function synnotesnselected(){
+	while(true){
+	try{
+	for(var i=0;i<notes.length;i++){
+	if(!selected[i])	selected[i] = [];
+    for(var j=0;j<notes[i].length;j++){
+    	if(selected[i][j] == undefined) selected[i][j] = 0;
+    	}
+	}
+	break;
+	}catch(e){
+		if(e="TypeError: Cannot read property 'length' of undefined"){
+			//debugger;
+			console.log("notes have not defined");
+			selected[i]=[];
+			notes[i]=[];
+
+		}
+	}
+	}
+
+}
+
+//check if there is 1 in selected
+function selectedcontain1(){
+	//checknotesandselected();
+	for(var i = 0;i<selected.length;i++){
+		for(var j=0; j<selected[i].length;j++){
+			if(selected[i][j] == 1){
+				return [i,j];
+			}
+		}
+	}
+	return false;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+</script>
+	<script type="text/javascript" src="./MidiConvert-master/build/MidiConvert.js"></script>
+
+<script type="text/javascript">
+	//import * as MidiConvert from '/MidiConvert-master/src/MidiConvert.js';
+		var importData;
+		var onebeatduration;
+		var onebarduration;
+		var bpm,PPQ;
+		var tracks = [];
+		var startbeatinbar = [];
+		var notesdurations = [];
+		var notespitch = [];
+		var notesbar = [];
+		var show =0;
+		var dictionary = [];
+		var track_names = [];
+
+
+		if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
+			document.querySelector("#FileDrop #Text").textContent = "Reading files not supported by this browser";
+		} else {
+
+			var fileDrop = document.querySelector("#FileDrop")
+
+			fileDrop.addEventListener("dragenter", function(){
+				fileDrop.classList.add("Hover");
+			})
+
+			fileDrop.addEventListener("dragleave", function(){
+				fileDrop.classList.remove("Hover");
+			});
+
+			fileDrop.addEventListener("drop", function(){
+				fileDrop.classList.remove("Hover");
+			});
+
+			document.querySelector("#FileDrop input").addEventListener("change", function(e){
+				//get the files
+				var files = e.target.files;
+				if (files.length > 0){
+					var file = files[0];
+					document.querySelector("#FileDrop #Text").textContent = file.name;
+					parseFile(file);
+				}
+			});
+			document.getElementById("Importbtn").addEventListener("change", function(e){
+				//get the files
+				var files = e.target.files;
+				if (files.length > 0){
+					var file = files[0];
+					document.querySelector("#FileDrop #Text").textContent = file.name;
+					parseFile(file);
+				}
+			});
+		}
+
+//callback function of drag-and-drop box
+//set the meta-datas of the song to variables
+//meta-data: bpm,beats per bar, beat duration
+//at the same time copy the tracks into the global variable tracks
+//then combine notes that start at the same time (tracks becomes 2Darray) @combinenotesbytime
+//then import notes' keys as notespitch and notes' duration as notesdurations (temperary)
+//as default only show first track, later let clients to show other tracks
+
+		function parseFile(file){
+			//read the file
+			var reader = new FileReader();
+			reader.onload = function(e){
+				console.log(e);
+				reset();
+				importData = MidiConvert.parse(e.target.result);
+				bpm = Math.floor(importData.header.bpm);
+				PPQ = importData.header.PPQ;
+				bartempo = importData.header.timeSignature;
+				onebeatduration = PPQ;
+				onebarduration = bartempo[0];
+				for(var i=0;i<importData.tracks.length;i++){
+					if(importData.tracks[i].notes != null && importData.tracks[i].notes!="" && importData.tracks[i].notes.length != 0){
+						tracks.push(importData.tracks[i]);
+						track_names.push(importData.tracks[i].name);
+						
+					}
+				}
+				for(var i=0 ;i<tracks.length;i++){
+					//sort notes by time first
+					tracks[i].notes.sort(function(a,b){
+						return a.time-b.time;
+					});
+					//insert rest for each spaces
+
+					tracks[i] = combinenotesbytime(tracks[i]);
+					//console.log(tracks[i]);
+					notesbar[i] = assignnotestobar(tracks[i]);
+					//console.log(notesbar[i]);
+					var result = importtonotes(tracks[i],notesbar[i]);
+					console.log(result);
+					// console.log(notesbar);	
+					notespitch[i] = result[0];
+					notesdurations[i] =result[1];
+					startbeatinbar[i] = result[2];
+					notesdurations[i] = durationclear(notesdurations[i]);
+					startbeatinbar[i] = durationclear(startbeatinbar[i]);
+					// console.log("now insert in track"+i);
+					result = insertrest(notespitch[i],notesbar[i],startbeatinbar[i],notesdurations[i]);
+					notespitch[i] = result[0];
+					notesbar[i] =result[1];
+					startbeatinbar[i] = result[2];
+					notesdurations[i] = result[3];
+					// console.log("finished insert rest in track"+i);
+					// console.log(result);
+					//console.log(importData.tracks[1]);
+				}
+				var track_names_string = "";
+				for(var i=0;i<tracks.length;i++){
+					track_names_string += i.toString() + ". " + track_names[i] + '\n' ;
+				}
+				track_names_string += "Please enter the desired number of track to be shown: ";
+				var targettrack = prompt(track_names_string);
+				initnotes(targettrack);
+				TooManyTickscheck();
+				drawagain();
+
+
+			};
+			reader.readAsBinaryString(file);
+		}
+
+		function reset(){
+		 importData = "";
+		 onebeatduration = 0;
+		 onebarduration = 0;
+		 bpm =0;
+		 tracks = [];
+		 startbeatinbar = [];
+		 notesdurations = [];
+		 notespitch = [];
+		 notesbar = [];
+		 show =1;
+		 dictionary = [];
+		 track_names = [];
+
+		}
+
+//calculate how many bar do this track have
+		function calculatenobar(){
+			if (importData ==null ||onebeatduration ==null ||onebarduration== null ||bpm == null){
+				return;
+			}
+			else{
+				return Math.ceil(importData.duration/1000/onebarduration);
+			}
+		}
+
+//return the list of which barno are the input notes belongs to
+		function assignnotestobar(track){
+			var numberofbar = calculatenobar(track);
+			var track_notes = track;
+			var barno = [];
+			var temp, tempbarno,x;
+			for(var i=0; i<track_notes.length;i++){
+				 temp = track_notes[i][0];
+				 tempbarno = Math.ceil(temp.time/(onebarduration*1000));
+				 if(tempbarno>numberofbar){
+				 	console.log("notes outside the track!!!");
+				 }
+				 x= Math.floor(temp.time/(onebarduration*1000));
+				 barno[i] = x<1?1:x+1;
+				}
+			return barno;
+		}
+
+
+//return the key of the notes(array) , and duration of the notes(array), from the array of notes objects
+		function importtonotes(track,barnolist){
+			if(track==null && track.length != barnolist.length){
+				throw("track is not importable");
+			}else{
+			var keyresult=[];
+			var key = [];
+			var duration =[]; // in beat
+			var startbeat =[]; //in beat
+			var temp,tempd,temps;
+			var string;
+			for(var i=0;i<track.length;i++){
+				for(var j=0;j<track[i].length;j++){
+					temp = track[i][j];
+					key.push(twelvekeyarray[temp.midi%12]+"/"+(Math.floor(temp.midi/12)-1));
+				}
+				temp = track[i][0];
+				tempd = Math.floor(temp.duration*1000)/1000;
+				//console.log(tempd);
+				temps = (temp.time-((barnolist[i]-1)*onebarduration));
+				duration.push(tempd);
+				startbeat.push(temps);
+				keyresult.push(key);
+				key =[];
+			}
+			}
+			return [keyresult,duration,startbeat];
+		}
+
+
+//combine notes that start at the same time( chords), will overide the original track
+		function combinenotesbytime(track){
+			var track_notes = track.notes;
+			var temp1,temp2;
+			var notesarray = [];
+			var result = [];
+			for(var i=0; i<track_notes.length;i++){
+				temp1 = track_notes[i];
+				notesarray.push(temp1);
+				for(var j=0; j<track_notes.length;j++){
+					if(temp1.time == track_notes[j].time && i!=j){
+						notesarray.push(track_notes[j]);
+						track_notes.splice(j,1);
+						j--;
+					}
+				}
+				result.push(notesarray);
+				//track_notes.splice(i,1);
+				notesarray = [];
+			}
+			return result;
+		}
+
+
+		function insertrest(notespitch1,notesbar1,startbeatinbar1,notesdurations1){
+			debugger;
+			var temp1,temp2;
+			var result=[];
+			var bar=1;
+
+			for(var i=0;i<startbeatinbar1.length-1;i++){
+				//debugger;
+				if(notesbar[i]==29){
+					debugger;
+				}
+				if(notesbar1[i]>bar){//if the whole bar is rest
+						notespitch1.splice(i,0,["rest"]);
+						notesbar1.splice(i,0,bar);
+						startbeatinbar1.splice(i,0,onebarduration * 10e2 * (bar-1));
+						notesdurations1.splice(i,0,bartempo[0]*10e2);
+						bar++;
+						continue;
+				}
+
+				if(notesbar1[i]!=notesbar1[i-1]){// start note of a bar
+					temp1 = onebarduration * 10e2 * (notesbar1[i] -1);
+					temp2 = startbeatinbar1[i];
+					if(temp2> temp1){
+						notespitch1.splice(i,0,["rest"]);
+						notesbar1.splice(i,0,notesbar1[i]);
+						startbeatinbar1.splice(i,0,temp1);
+						notesdurations1.splice(i,0,temp2-temp1);
+						i++;
+					}
+					bar = notesbar1[i+1]<=bar+1?notesbar1[i+1]:bar+1;
+				}else{
+					temp1 = startbeatinbar1[i]+notesdurations1[i];
+					temp2 = startbeatinbar1[i+1];
+					if(temp2 > temp1 && notesbar1[i] == notesbar1[i+1]){
+						console.log("add rest at:"+i+"with duration"+(temp2-temp1));
+						notespitch1.splice(i+1,0,["rest"]);
+						notesbar1.splice(i+1,0,notesbar1[i]);
+						startbeatinbar1.splice(i+1,0,temp1);
+						notesdurations1.splice(i+1,0,temp2-temp1);
+						i++;
+					}
+					bar = notesbar1[i+1]<=bar+1?notesbar1[i+1]:bar+1;
+				}
+			}
+			result.push(notespitch1,notesbar1,startbeatinbar1,notesdurations1);
+			return result;
+		}
+
+		function durationclear(notesdurations){
+			//debugger;
+			for(var t=0;t<notesdurations.length;t++){
+					notesdurations[t]=roundToNearest(notesdurations[t]/10e2,0.125) *10e2;
+				}
+			return notesdurations;
+			}
+
+
+		function checkbeatunderstand(){
+			var miss = 0;
+			for(var t=0;t<notesdurations.length;t++){
+				for(var i=0;i<notesdurations[t].length;i++){
+					if(notesdurations[t][i]%0.125 != 0){
+						miss++;
+					}
+				}
+			}
+			console.log("there are "+miss+"notes' beat cannot be understood");
+		}
+
+		function initnotes(trackno){
+			var noofbar = calculatenobar();
+			staves = [];
+			var staveend=0;
+			for(var i=0;i<noofbar;i++){
+				addStave();
+			}
+			notes=[];
+			voices=[];
+			selected=[];
+			// remarks: need to add check case for correctness of arraylists notesdurations,notesbar,startbeat 
+
+			//variables for initialize Stavenotes
+			//var key,duration;
+			for(var i=0; i<notesdurations[trackno].length;i++){
+				if(notesbar[trackno][i] == 30){
+					debugger;
+				}
+				if(notespitch[trackno][i]!="rest"){
+					try{
+						// if(notespitch[trackno][i].length<2){
+						// 	console.log(i+"th notes have incorrect pitch");
+						// 	console.log("the pitch is "+notespitch[trackno][i]);
+						// 	console.log("the pitch length is"+ notespitch[trackno][i].length);
+						// 	//debugger;
+						// 	continue;
+						// }
+						if(beattonotevalue(notesdurations[trackno][i]/10e2)!=""){
+							var beat1 = beattonotevalue(notesdurations[trackno][i]/10e2);
+							var note1 = new VF.StaveNote({"clef": clefstate, "keys": notespitch[trackno][i], "duration": beat1});
+							if(beat1.match(/[d]/i)) note1.addDotToAll();
+							if(beat1.match(/dd/i)) note1.addDotToAll(); 
+							notes[notesbar[trackno][i]-1].push(note1);
+
+					}
+
+					}catch(e){
+						if(e == "TypeError: Cannot read property 'push' of undefined"){
+							console.log("notes need open new array");
+							notes[notesbar[trackno][i]-1]= [];
+							voices[notesbar[trackno][i]-1]=new VF.Voice({num_beats: bartempo[0], beat_value: bartempo[1]});
+							if(beattonotevalue(notesdurations[trackno][i]/10e2)!=""){
+								var beat1 = beattonotevalue(notesdurations[trackno][i]/10e2);
+								var note1 = new VF.StaveNote({"clef": clefstate, "keys": notespitch[trackno][i], "duration": beat1});
+								if(beat1.match(/[d]/i)) note1.addDotToAll(); 
+								if(beat1.match(/dd/i)) note1.addDotToAll();
+								notes[notesbar[trackno][i]-1].push(note1);
+
+						}
+
+						}
+						if(e == "Key must have note + octave and an optional glyph: rest"){
+							console.log(e);
+							console.log(notespitch[trackno][i])
+						}
+					}
+				}else{
+					try{
+					if(beattonotevalue(notesdurations[trackno][i]/10e2)!=""){
+							var beat1 = beattonotevalue(notesdurations[trackno][i]/10e2);
+							var note1 = new VF.StaveNote({"clef": clefstate, "keys": restkey, "duration": beat1 +"r"});
+							if(beat1.match(/[d]/i)) note1.addDotToAll(); 
+							if(beat1.match(/dd/i)) note1.addDotToAll();
+							notes[notesbar[trackno][i]-1].push(note1);
+				}
+			}catch(e){
+				if(e == "TypeError: Cannot read property 'push' of undefined"){
+							console.log("notes need open new array");
+							notes[notesbar[trackno][i]-1]= [];
+							voices[notesbar[trackno][i]-1]=new VF.Voice({num_beats: bartempo[0], beat_value: bartempo[1]});
+							if(beattonotevalue(notesdurations[trackno][i]/10e2)!=""){
+								var beat1 = beattonotevalue(notesdurations[trackno][i]/10e2);
+								var note1 = new VF.StaveNote({"clef": clefstate, "keys": restkey, "duration": beat1 +"r"});
+								if(beat1.match(/d/i)) note1.addDotToAll(); 
+								if(beat1.match(/dd/i)) note1.addDotToAll();
+
+								notes[notesbar[trackno][i]-1].push(note1);
+
+						}
+
+						}
+						if(e == "Key must have note + octave and an optional glyph: rest"){
+							console.log(e);
+							console.log(notespitch[trackno][i]);
+						}
+					}
+			}
+			}
+		}
+		
+		function beattonotevalue(beat1){
+			//debugger;
+			var beat = beat1;
+			var result="";
+			var rounded =false;
+			while(result==""){
+					if(beat >= 4){
+						result = "1";
+						break;
+					}else if(beat ==3.5){
+						result = "2dd";
+						break;
+					}else if(beat == 3.25){
+						result = "2d";
+						break;
+					}else if(beat == 3){
+						result = "2d";
+						break;
+					}else if(beat == 2){
+						result = "2";
+						break;
+					}else if(beat == 1.75){
+						result="4dd";
+						break;
+					}
+					else if(beat == 1.5){
+						result = "4d";
+						break;
+					}else if(beat == 1){
+						result = "4";
+						break;
+					}else if(beat == 0.875){
+						result = "8dd";
+						break;
+					}
+					else if(beat == 0.75){
+						result = "8d";
+						break;
+					}else if(beat == 0.5){
+						result = "8";
+						break;
+					}else if(beat == 0.375){
+						result = "16d";
+						break;
+					}else if(beat == 0.25){
+						result = "16";
+						break;
+					}else if(beat == 0.125){
+						result = "32";
+						break
+					}
+					else{
+						// if(dictionary[beat]==undefined){
+						// result = prompt("the input beat is:"+beat+",please input corisponding note value:");
+						// dictionary[beat] = result;
+						// }else{
+						// 	result = dictionary[beat];
+						// }
+						if(rounded == true){
+							break;
+						}else{
+						beat = roundToNearest(beat,0.125);
+						rounded = true;
+					}
+					}
+				}
+				if(result ==""){
+					while(result==""){
+					if(beat >= 4){
+						result = "1";
+						break;
+					}else if(beat >=3.5){
+						result = "2dd";
+						break;
+					}else if(beat >= 3.25){
+						result = "2d";
+						break;
+					}else if(beat >= 3){
+						result = "2d";
+						break;
+					}else if(beat >= 2){
+						result = "2";
+						break;
+					}else if(beat >= 1.75){
+						result="4dd";
+						break;
+					}
+					else if(beat >= 1.5){
+						result = "4d";
+						break;
+					}else if(beat >= 1){
+						result = "4";
+						break;
+					}else if(beat >= 0.875){
+						result = "8dd";
+						break;
+					}
+					else if(beat >= 0.75){
+						result = "8d";
+						break;
+					}else if(beat >= 0.5){
+						result = "8";
+						break;
+					}else if(beat >= 0.375){
+						result = "16d";
+						break;
+					}else if(beat >= 0.25){
+						result = "16";
+						break;
+					}else if(beat >= 0.125){
+						result = "32";
+						break;
+					}else if(beat == 0){
+						result = "64";
+					}
+					}
+
+				}
+				//debugger;
+				return result;
+			}
+
+			function roundToNearest(numToRound, numToRoundTo) {
+    			numToRoundTo = 1 / (numToRoundTo);
+
+    			return Math.round(numToRound * numToRoundTo) / numToRoundTo;
+			}
+
+			function TooManyTickscheck(){
+				var bart = 16384/bartempo[1]*bartempo[0];
+				var count=0;
+				for(var i=0;i<notes.length;i++){
+					count=0;
+					for(var j=0;j<notes[i].length;j++){
+						count+=notes[i][j].ticks.numerator;
+						if(count>bart){
+							notes[i].splice(j,1);
+						}
+					}
+				}
+			}
+
+
+	</script>
+
+	<script type='text/javascript' src = 'MidiWriter.js'></script>
+	<script type="text/javascript">
+		function initMIDI(){
+			//transform notes into 1 dimensional
+			var notesarray = transformnotesto1d();
+			var noteevent;//for saving temporary noteevent
+			var track = new MidiWriter.Track();
+			track.setTimeSignature(bartempo[0],bartempo[1]);
+			var w = 0;//variable saving the rest durations, to be the wait parameter in NoteEvent
+			
+			// Define an instrument (optional):
+			track.addEvent(new MidiWriter.ProgramChangeEvent({instrument : 1}));
+			// add notes
+			for(var i = 0; i<notesarray.length;i++){
+				if(notesarray[i].isRest()){
+					w += durationToTicks(notesarray[i].duration) / 8;
+				}
+				else{
+				var p = notesarray[i].keys;
+				for(var o = 0; o<p.length;o++){
+					p[o] = p[o].replace('/','');
+				}
+				console.log(p);
+				noteevent = new MidiWriter.NoteEvent({pitch:p,duration : notesarray[i].duration, wait : w});
+				w = 0;
+				track.addEvent(noteevent);
+				}
+			}
+			console.log(track);
+			var writer = new MidiWriter.Writer([track]);
+			console.log(writer.dataUri());
+			return writer.dataUri();
+
+		}
+
+
+		function transformnotesto1d(){
+			var res = [];
+			for(var i = 0; i<notes.length;i++){
+				for(var j = 0;j<notes[i].length;j++){
+					res.push(notes[i][j]);
+				}
+			}
+			return res;
+		}
+
+		function Save(){
+			var link = initMIDI();
+			window.open(link);
+		}
+
+		// document.getElementById("midi_player_script").onload = function(){
+		// 	debugger;
+		// 	player = MIDI.Player;
+		// }
+		
+
+		function PlayMIDI(){
+			if(player.currentData === undefined){
+			player.loadFile(initMIDI());
+			player.start();
+			}
+			else if(player.currentTime == player.endTime){
+				player.currentTime = 0;
+				player.start();
+			}
+			else{
+				player.start();
+			}
+		}
+
+		function PauseMIDI(){
+			player = MIDI.Player;
+			player.pause();
+		}
+	</script>
+
+
+
+</body>
+</html> 
