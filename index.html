@@ -68,6 +68,7 @@
 	<button class="inputbtn" id="16notebtn">6<img src="./music_notes_img/16t.png"></button>
 	<button class="inputbtn" id="32notebtn">3<img src="./music_notes_img/32t.png"></button>
 	<button class="inputbtn" id="restbtn">r<img src="./music_notes_img/rest.png"></button>
+	<button class="inputbtn" id="playbtn">r<img src="./music_notes_img/play.png"></button>	
 
 </div>
 	<div id="FileDrop">
@@ -394,10 +395,13 @@ $("body").keydown(function(e){
 				break;
 			case 32: //spacebar, for playing the song
 				playstate = !playstate;
-				if(playstate)
+				if(playstate){
 					PlayMIDI();
-				else
+					document.getElementById("playbtn").classList.add("act");
+				}else{
 					PauseMIDI();
+					document.getElementById("playbtn").classList.remove("act");
+				}
 				break;
 
 
