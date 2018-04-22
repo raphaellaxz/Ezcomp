@@ -8,7 +8,6 @@ http.createServer(function (req, res) {
   var filename = "." + q.pathname;
   var tmp = q.pathname.lastIndexOf(".");
   var extension = q.pathname.substring((tmp+1));
-  console.log(extension);
   //console.log(req);
   fs.readFile(filename, function(err, data) {
     if (err) {
@@ -37,4 +36,7 @@ http.createServer(function (req, res) {
         }
     return res.end();
   });
+
 }).listen(8080); 
+
+console.log("server created on port 8080");

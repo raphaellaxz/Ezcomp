@@ -1,0 +1,133 @@
+
+.navbar {
+    height: 35px;
+    overflow: hidden;
+    background-color: #333;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.navbar a {
+    float: left;
+    font-size: 12px;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.dropdown {
+    float: left;
+    overflow: hidden;
+}
+
+.dropdown .dropbtn {
+    font-size: 12px;    
+    border: none;
+    outline: none;
+    color: white;
+    padding: 14px 16px;
+    background-color: inherit;
+    font-family: inherit;
+    margin: 0;
+}
+
+.navbar a:hover, .dropdown:hover .dropbtn {
+    background-color: red;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a  {
+    float: none;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+
+.dropdown-content #Savebtn  {
+    float: none;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+
+
+.dropdown-content a:hover {
+    background-color: #ddd;
+}
+
+.dropdown.act .dropdown-content {
+    display: block;
+}
+
+.inputbtn {
+    display: inline-block;
+    height: 35px;
+    padding: 0;
+    margin: 0;
+    vertical-align: top;
+    width: 35px;
+    position: relative;
+    top: 0px;
+    transition: all ease 0.3s;
+}
+
+.inputbtn.act {
+  box-shadow: 0 3px 0 #00823F;
+  top: 3px;
+  background-color: #00FF7C;
+}
+
+.inputbtn img {
+    display: inline-block;
+    height: 30px;  
+    width: 20px;
+}
+
+
+#FileDrop{
+            position: relative;
+            width: 1000px;
+            height: 200px;
+            margin-left: -650px;
+            border: 2px dashed black;
+            left: 50%;
+            margin-top: 70px;
+            color: black;
+        }
+
+        #FileDrop.Hover{
+            background-color: black;
+            color: white;
+        }
+
+        #FileDrop input {
+            position: absolute;
+            padding: 0px -200px 0px -200px;
+            width: 1000px;
+            height: 100%;
+            opacity: 0;
+            left: 0px;
+            top: 0px;
+        }
+
+        #FileDrop #Text {
+            position: absolute;
+            width: 1000px;
+            height: 100%;
+            line-height: 200px;
+            left: 0px;
+            top: 0px;
+            text-align: center;
+        }
