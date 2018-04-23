@@ -222,6 +222,9 @@ $(document).ready(function(){
     if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
         e.preventDefault();
     }
+    // if([83].indexOf(e.keyCode) > -1 && e.crtlKey ){
+    // 	e.preventDefault();
+    // }
 }, false);
 //
 
@@ -403,10 +406,13 @@ $("body").keydown(function(e){
 					document.getElementById("playbtn").classList.remove("act");
 				}
 				break;
-
-
+			case 83:
+				if(e.ctrlKey){
+					Save();
+				}
 
 		}
+
 });
 
 $(".dropdown").click(function(e){
