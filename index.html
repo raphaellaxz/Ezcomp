@@ -800,8 +800,9 @@ function drawagain(){
 		}
 			try{
 				var needtofill = checkbarticksnotfill(voices[i]);
-				if(needtofill!= undefined)
-				fillvoice(i,needtofill);
+				if(needtofill != undefined){
+						needtofill.forEach(function(r){fillvoice(i,r);});
+					}
 				//else if(typeof(needtofill) == "number") fillvoice(i,needtofill);
 			formatter = new VF.Formatter().joinVoices([voices[i]]).format([voices[i]],staves[i].width*0.8);
 			// if(notes[i][notes[i].length-1].getNoteHeadEndX()> (staves[i].end_x - staves[i].start_x)){
@@ -816,8 +817,9 @@ function drawagain(){
 					if(voices[i].ticksUsed.numerator !=(usedt)){voices[i].ticksUsed.numerator = usedt;}
 					//fill the stave with rest
 					var needtofill = checkbarticksnotfill(voices[i]);
-					if(needtofill != undefined)
-					fillvoice(i,needtofill);
+					if(needtofill != undefined){
+						needtofill.forEach(function(r){fillvoice(i,r);});
+					}
 					//else if(typeof(needtofill) == "number") fillvoice(i,needtofill);
 				}
 			}
@@ -876,53 +878,127 @@ function checkbarticksnotfill(bar){
 		tickscount+= tempnotes[i].ticks.numerator;
 	}
 	var notfill = full - tickscount;
+	if(notfill == 0){
+		return undefined;
+	}
+	else if(notfill > 0 ){
 	console.log("bar needs" + notfill +"ticks to fill the bar");
-	return TickToduration(notfill);
+	return TickToduration(notfill).result;
+	}
 }
 
 //return the note value of the given tick
 //param:tick(int)
 //output: notevalue
 
-function TickToduration(tick){
+function TickToduration(tick1){
+	var tick = tick1;
 	var resolution = 16384;
 	var sdresolution = 24576;
 	var ddresolution = 28672;
-	var result;
+	var result = [];
+	if(tick<resolution/64){
+		var info = {result : ["64"], tick : tick1};
+		return info;
+	}
+
 	//var iregular = false;
 	if(tick == resolution) result = 1;
 	else if(tick >= resolution/2){ 
-		if(tick >= ddresolution/2)	result = 2 + "dd";
-		if(tick >= sdresolution/2)	result = 2+"d";
-		if(tick == resolution/2)	result = 2;
+		if(tick >= ddresolution/2){
+			result.push(2 + "dd");
+			tick -= ddresolution/2;
+		}
+		if(tick >= sdresolution/2){
+			result.push(2+"d");
+			tick -= sdresolution/2;
+		}
+		if(tick >= resolution/2){
+			result.push("2");
+			tick -= resolution/2;
+		}
 	}
 	else if(tick >= resolution/4){
-		if(tick >= ddresolution/4)	result = 4 + "dd";
-		if(tick >= sdresolution/4)	result = 4+"d";
-		if(tick == resolution/4)	result = 4;
+		if(tick >= ddresolution/4){
+			result.push(4 + "dd");
+			tick -= ddresolution/4;
+		}
+		if(tick >= sdresolution/4){
+			result.push(4+"d");
+			tick -= sdresolution/4;
+		}
+		if(tick >= resolution/4){
+			result.push("4");
+			tick -= resolution/4;
+		}
 		
 	}
 	else if(tick >= resolution/8) {
-		if(tick >= ddresolution/8)	result = 8 + "dd";
-		if(tick >= sdresolution/8)	result = 8+"d";
-		if(tick == resolution/8)	result = 8;
+		if(tick >= ddresolution/8){
+			result.push(8 + "dd");
+			tick -= ddresolution/8;
+		}
+		if(tick >= sdresolution/8){
+			result.push(8+"d");
+			tick -= sdresolution/8;
+		}
+		if(tick >= resolution/8){
+			result.push("8");
+			tick -= resolution/8;
+		}
 	}
 	else if(tick >= resolution/16) {
-		if(tick >= ddresolution/16)	result = 16 + "dd";
-		if(tick >= sdresolution/16)	result = 16+"d";
-		if(tick == resolution/16)	result = 16;
+		if(tick >= ddresolution/16){
+			result.push(16 + "dd");
+			tick -= ddresolution/16;
+		}
+		if(tick >= sdresolution/16){
+			result.push(16+"d");
+			tick -= sdresolution/16;
+		}
+		if(tick >= resolution/16){
+			result.push("16");
+			tick -= resolution/16;
+		}
 	}else if(tick >= resolution/32){
-		if(tick >= ddresolution/32)	result = 32 + "dd";
-		if(tick >= sdresolution/32)	result = 32+"d";
-		if(tick == resolution/32)	result = 32;
+		if(tick >= ddresolution/32){
+			result.push(32 + "dd");
+			tick -= ddresolution/32;
+		}
+		if(tick >= sdresolution/32){
+			result.push(32+"d");
+			tick -= sdresolution/32;
+		}
+		if(tick >= resolution/32){
+			result.push("32");
+			tick -= resolution/32;
+		}
 	} 
 	else if( tick >= resolution/64){
-		if(tick >= ddresolution/64)	result = 64 + "dd";
-		if(tick >= sdresolution/64)	result = 64+"d";
-		if(tick == resolution/64)	result = 64;
+		if(tick >= ddresolution/64){
+			result.push(64 + "dd");
+			tick -= ddresolution/64;
+		}
+		if(tick >= sdresolution/64){
+			result.push(64+"d");
+			tick -= sdresolution/64;
+		}
+		if(tick >= resolution/64){
+			result.push("64");
+			tick -= resolution/64;
+		}
 	}
 
-	 return result;
+	while(tick > 0 ){
+		var recures = TickToduration(tick);
+		result = result.concat(recures.result);
+		tick -= recures.tick;
+	}
+
+	var info = {result: result, tick : tick1};
+
+
+	 return info;
 
 }
 
