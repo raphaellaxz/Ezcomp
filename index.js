@@ -6,8 +6,8 @@ var chalk = require('chalk');
 
 var server = new StaticServer({
   rootPath: '.',            // required, the root of the server file tree
-  port: 8080,               // required, the port to listen
-  name: 'my-http-server',   // optional, will set "X-Powered-by" HTTP header
+  port: process.env.PORT|| 8080,               // required, the port to listen
+  name: 'ezcomp-server',   // optional, will set "X-Powered-by" HTTP header
 });
  
 server.start(function () {
