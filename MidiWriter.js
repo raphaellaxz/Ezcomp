@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MidiWriter = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2129,11 +2129,6 @@ process.umask = function() { return 0; };
 },{}],5:[function(require,module,exports){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Writer = exports.Vexflow = exports.Utils = exports.Track = exports.ProgramChangeEvent = exports.NoteOnEvent = exports.NoteOffEvent = exports.NoteEvent = exports.MetaEvent = exports.ControllerChangeEvent = exports.Constants = exports.Chunk = exports.MidiWriter = undefined;
-
 var _chunk = require('./chunk.js');
 
 var _constants = require('./constants.js');
@@ -2160,31 +2155,17 @@ var _writer = require('./writer.js');
 
 var MidiWriter = function MidiWriter() {};
 
-// MidiWriter.Vexflow = Vexflow;
-// MidiWriter.Utils = Utils;
-// MidiWriter.Track = Track;
-// MidiWriter.ProgramChangeEvent = ProgramChangeEvent;
-// MidiWriter.NoteOnEvent = NoteOnEvent;
-// MidiWriter.NoteOffEvent = NoteOffEvent;
-// MidiWriter.NoteEvent = NoteEvent;
-// MidiWriter.MetaEvent = MetaEvent;
-// MidiWriter.ControllerChangeEvent = ControllerChangeEvent;
-// MidiWriter.Constants = Constants;
-// MidiWriter.Chunk = Chunk;
-
-exports.MidiWriter = MidiWriter;
-exports.Chunk = _chunk.Chunk;
-exports.Constants = _constants.Constants;
-exports.ControllerChangeEvent = _controllerChangeEvent.ControllerChangeEvent;
-exports.MetaEvent = _metaEvent.MetaEvent;
-exports.NoteEvent = _noteEvent.NoteEvent;
-exports.NoteOffEvent = _noteOffEvent.NoteOffEvent;
-exports.NoteOnEvent = _noteOnEvent.NoteOnEvent;
-exports.ProgramChangeEvent = _programChangeEvent.ProgramChangeEvent;
-exports.Track = _track.Track;
-exports.Utils = _utils.Utils;
-exports.Vexflow = _vexflow.Vexflow;
-exports.Writer = _writer.Writer;
+MidiWriter.Vexflow = _vexflow.Vexflow;
+MidiWriter.Utils = _utils.Utils;
+MidiWriter.Track = _track.Track;
+MidiWriter.ProgramChangeEvent = _programChangeEvent.ProgramChangeEvent;
+MidiWriter.NoteOnEvent = _noteOnEvent.NoteOnEvent;
+MidiWriter.NoteOffEvent = _noteOffEvent.NoteOffEvent;
+MidiWriter.NoteEvent = _noteEvent.NoteEvent;
+MidiWriter.MetaEvent = _metaEvent.MetaEvent;
+MidiWriter.ControllerChangeEvent = _controllerChangeEvent.ControllerChangeEvent;
+MidiWriter.Constants = _constants.Constants;
+MidiWriter.Chunk = _chunk.Chunk;
 
 },{"./chunk.js":6,"./constants.js":7,"./controller-change-event.js":8,"./meta-event.js":9,"./note-event.js":10,"./note-off-event.js":11,"./note-on-event.js":12,"./program-change-event.js":13,"./track.js":14,"./utils.js":15,"./vexflow.js":16,"./writer.js":17}],6:[function(require,module,exports){
 "use strict";
@@ -2290,8 +2271,8 @@ var MetaEvent = function MetaEvent(fields) {
 	_classCallCheck(this, MetaEvent);
 
 	this.type = 'meta';
-	this.data = MidiWriter.Utils.numberToVariableLength(0x00); // Start with zero time delta
-	this.data = this.data.concat(MidiWriter.Constants.META_EVENT_ID, fields.data);
+	this.data = Utils.numberToVariableLength(0x00); // Start with zero time delta
+	this.data = this.data.concat(Constants.META_EVENT_ID, fields.data);
 };
 
 exports.MetaEvent = MetaEvent;
@@ -2317,7 +2298,7 @@ var NoteEvent = function () {
 		_classCallCheck(this, NoteEvent);
 
 		this.type = 'note';
-		this.pitch = MidiWriter.Utils.toArray(fields.pitch);
+		this.pitch = Utils.toArray(fields.pitch);
 		this.wait = fields.wait || 0;
 		this.duration = fields.duration;
 		this.sequential = fields.sequential || false;
@@ -2341,12 +2322,12 @@ var NoteEvent = function () {
 			this.data = [];
 
 			var tickDuration = this.getTickDuration(this.duration, 'note');
-			var restDuration = this.wait;
+			var restDuration = this.getTickDuration(this.wait, 'rest');
 
 			// Apply grace note(s) and subtract ticks (currently 1 tick per grace note) from tickDuration so net value is the same
 			if (this.grace) {
 				var graceDuration = 1;
-				this.grace = MidiWriter.Utils.toArray(this.grace);
+				this.grace = Utils.toArray(this.grace);
 				this.grace.forEach(function (pitch) {
 					var noteEvent = new NoteEvent({ pitch: this.grace, duration: 'T' + graceDuration });
 					this.data = this.data.concat(noteEvent.data);
@@ -2359,18 +2340,18 @@ var NoteEvent = function () {
 			// If so create note events for each and apply the same duration.
 			var noteOn, noteOff;
 			if (Array.isArray(this.pitch)) {
-				// By default this is a chord if it's an array of notes that requires one MidiWriter.NoteOnEvent.
-				// If this.sequential === true then it's a sequential string of notes that requires separate MidiWriter.NoteOnEvents.
+				// By default this is a chord if it's an array of notes that requires one NoteOnEvent.
+				// If this.sequential === true then it's a sequential string of notes that requires separate NoteOnEvents.
 				if (!this.sequential) {
 					// Handle repeat
 					for (var j = 0; j < this.repeat; j++) {
 						// Note on
 						this.pitch.forEach(function (p, i) {
 							if (i == 0) {
-								noteOn = new MidiWriter.NoteOnEvent({ data: MidiWriter.Utils.numberToVariableLength(restDuration).concat(this.getNoteOnStatus(), MidiWriter.Utils.getPitch(p), this.velocity) });
+								noteOn = new NoteOnEvent({ data: Utils.numberToVariableLength(restDuration).concat(this.getNoteOnStatus(), Utils.getPitch(p), this.velocity) });
 							} else {
 								// Running status (can ommit the note on status)
-								noteOn = new MidiWriter.NoteOnEvent({ data: [0, MidiWriter.Utils.getPitch(p), this.velocity] });
+								noteOn = new NoteOnEvent({ data: [0, Utils.getPitch(p), this.velocity] });
 							}
 
 							this.data = this.data.concat(noteOn.data);
@@ -2379,10 +2360,10 @@ var NoteEvent = function () {
 						// Note off
 						this.pitch.forEach(function (p, i) {
 							if (i == 0) {
-								noteOff = new MidiWriter.NoteOffEvent({ data: MidiWriter.Utils.numberToVariableLength(tickDuration).concat(this.getNoteOffStatus(), MidiWriter.Utils.getPitch(p), this.velocity) });
+								noteOff = new NoteOffEvent({ data: Utils.numberToVariableLength(tickDuration).concat(this.getNoteOffStatus(), Utils.getPitch(p), this.velocity) });
 							} else {
 								// Running status (can ommit the note off status)
-								noteOff = new MidiWriter.NoteOffEvent({ data: [0, MidiWriter.Utils.getPitch(p), this.velocity] });
+								noteOff = new NoteOffEvent({ data: [0, Utils.getPitch(p), this.velocity] });
 							}
 
 							this.data = this.data.concat(noteOff.data);
@@ -2400,12 +2381,12 @@ var NoteEvent = function () {
 							// If duration is 8th triplets we need to make sure that the total ticks == quarter note.
 							// So, the last one will need to be the remainder
 							if (this.duration === '8t' && i == this.pitch.length - 1) {
-								var quarterTicks = MidiWriter.Utils.numberFromBytes(MidiWriter.Constants.HEADER_CHUNK_DIVISION);
+								var quarterTicks = Utils.numberFromBytes(Constants.HEADER_CHUNK_DIVISION);
 								tickDuration = quarterTicks - tickDuration * 2;
 							}
 
-							noteOn = new MidiWriter.NoteOnEvent({ data: MidiWriter.Utils.numberToVariableLength(restDuration).concat([this.getNoteOnStatus(), MidiWriter.Utils.getPitch(p), this.velocity]) });
-							noteOff = new MidiWriter.NoteOffEvent({ data: MidiWriter.Utils.numberToVariableLength(tickDuration).concat([this.getNoteOffStatus(), MidiWriter.Utils.getPitch(p), this.velocity]) });
+							noteOn = new NoteOnEvent({ data: Utils.numberToVariableLength(restDuration).concat([this.getNoteOnStatus(), Utils.getPitch(p), this.velocity]) });
+							noteOff = new NoteOffEvent({ data: Utils.numberToVariableLength(tickDuration).concat([this.getNoteOffStatus(), Utils.getPitch(p), this.velocity]) });
 
 							this.data = this.data.concat(noteOn.data, noteOff.data);
 						}, this);
@@ -2459,9 +2440,9 @@ var NoteEvent = function () {
 				return parseInt(duration.substring(1));
 			}
 
-			// Need to apply duration here.  Quarter note == MidiWriter.Constants.HEADER_CHUNK_DIVISION
+			// Need to apply duration here.  Quarter note == Constants.HEADER_CHUNK_DIVISION
 			// Rounding only applies to triplets, which the remainder is handled below
-			var quarterTicks = MidiWriter.Utils.numberFromBytes(MidiWriter.Constants.HEADER_CHUNK_DIVISION);
+			var quarterTicks = Utils.numberFromBytes(Constants.HEADER_CHUNK_DIVISION);
 			return Math.round(quarterTicks * this.getDurationMultiplier(duration, type));
 		}
 
@@ -2476,7 +2457,7 @@ var NoteEvent = function () {
 	}, {
 		key: 'getDurationMultiplier',
 		value: function getDurationMultiplier(duration, type) {
-			// Need to apply duration here.  Quarter note == MidiWriter.Constants.HEADER_CHUNK_DIVISION
+			// Need to apply duration here.  Quarter note == Constants.HEADER_CHUNK_DIVISION
 			switch (duration) {
 				case '0':
 					return 0;
@@ -2610,7 +2591,7 @@ var ProgramChangeEvent = function ProgramChangeEvent(fields) {
 
 	this.type = 'program';
 	// delta time defaults to 0.
-	this.data = MidiWriter.Utils.numberToVariableLength(0x00).concat(MidiWriter.Constants.PROGRAM_CHANGE_STATUS, fields.instrument);
+	this.data = Utils.numberToVariableLength(0x00).concat(Constants.PROGRAM_CHANGE_STATUS, fields.instrument);
 };
 
 exports.ProgramChangeEvent = ProgramChangeEvent;
@@ -2637,7 +2618,7 @@ var Track = function () {
 	function Track() {
 		_classCallCheck(this, Track);
 
-		this.type = MidiWriter.Constants.TRACK_CHUNK_TYPE;
+		this.type = Constants.TRACK_CHUNK_TYPE;
 		this.data = [];
 		this.size = [];
 		this.events = [];
@@ -2645,7 +2626,7 @@ var Track = function () {
 
 	/**
   * Adds any event type to the track.
-  * @param {(NoteEvent|MidiWriter.MetaEvent|ProgramChangeEvent)} event - Event object.
+  * @param {(NoteEvent|MetaEvent|ProgramChangeEvent)} event - Event object.
   * @param {function} mapFunction - Callback which can be used to apply specific properties to all events. 
   * @return {Track}
   */
@@ -2681,12 +2662,12 @@ var Track = function () {
 					}
 
 					this.data = this.data.concat(e.data);
-					this.size = MidiWriter.Utils.numberToBytes(this.data.length, 4); // 4 bytes long
+					this.size = Utils.numberToBytes(this.data.length, 4); // 4 bytes long
 					this.events.push(e);
 				}, this);
 			} else {
 				this.data = this.data.concat(event.data);
-				this.size = MidiWriter.Utils.numberToBytes(this.data.length, 4); // 4 bytes long
+				this.size = Utils.numberToBytes(this.data.length, 4); // 4 bytes long
 				this.events.push(event);
 			}
 
@@ -2702,10 +2683,10 @@ var Track = function () {
 	}, {
 		key: 'setTempo',
 		value: function setTempo(bpm) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_TEMPO_ID] });
+			var event = new MetaEvent({ data: [Constants.META_TEMPO_ID] });
 			event.data.push(0x03); // Size
 			var tempo = Math.round(60000000 / bpm);
-			event.data = event.data.concat(MidiWriter.Utils.numberToBytes(tempo, 3)); // Tempo, 3 bytes
+			event.data = event.data.concat(Utils.numberToBytes(tempo, 3)); // Tempo, 3 bytes
 			return this.addEvent(event);
 		}
 
@@ -2724,14 +2705,14 @@ var Track = function () {
 			midiclockspertick = midiclockspertick || 24;
 			notespermidiclock = notespermidiclock || 8;
 
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_TIME_SIGNATURE_ID] });
+			var event = new MetaEvent({ data: [Constants.META_TIME_SIGNATURE_ID] });
 			event.data.push(0x04); // Size
-			event.data = event.data.concat(MidiWriter.Utils.numberToBytes(numerator, 1)); // Numerator, 1 bytes
+			event.data = event.data.concat(Utils.numberToBytes(numerator, 1)); // Numerator, 1 bytes
 
 			var _denominator = Math.log2(denominator); // Denominator is expressed as pow of 2
-			event.data = event.data.concat(MidiWriter.Utils.numberToBytes(_denominator, 1)); // Denominator, 1 bytes
-			event.data = event.data.concat(MidiWriter.Utils.numberToBytes(midiclockspertick, 1)); // MIDI Clocks per tick, 1 bytes
-			event.data = event.data.concat(MidiWriter.Utils.numberToBytes(notespermidiclock, 1)); // Number of 1/32 notes per MIDI clocks, 1 bytes
+			event.data = event.data.concat(Utils.numberToBytes(_denominator, 1)); // Denominator, 1 bytes
+			event.data = event.data.concat(Utils.numberToBytes(midiclockspertick, 1)); // MIDI Clocks per tick, 1 bytes
+			event.data = event.data.concat(Utils.numberToBytes(notespermidiclock, 1)); // Number of 1/32 notes per MIDI clocks, 1 bytes
 			return this.addEvent(event);
 		}
 
@@ -2745,7 +2726,7 @@ var Track = function () {
 	}, {
 		key: 'setKeySignature',
 		value: function setKeySignature(sf, mi) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_KEY_SIGNATURE_ID] });
+			var event = new MetaEvent({ data: [Constants.META_KEY_SIGNATURE_ID] });
 			event.data.push(0x02); // Size
 
 			var mode = mi || 0;
@@ -2788,8 +2769,8 @@ var Track = function () {
 				sf = fifthindex === -1 ? 0 : fifthindex - 7;
 			}
 
-			event.data = event.data.concat(MidiWriter.Utils.numberToBytes(sf, 1)); // Number of sharp or flats ( < 0 flat; > 0 sharp)
-			event.data = event.data.concat(MidiWriter.Utils.numberToBytes(mode, 1)); // Mode: 0 major, 1 minor
+			event.data = event.data.concat(Utils.numberToBytes(sf, 1)); // Number of sharp or flats ( < 0 flat; > 0 sharp)
+			event.data = event.data.concat(Utils.numberToBytes(mode, 1)); // Mode: 0 major, 1 minor
 			return this.addEvent(event);
 		}
 
@@ -2802,9 +2783,9 @@ var Track = function () {
 	}, {
 		key: 'addText',
 		value: function addText(text) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_TEXT_ID] });
-			var stringBytes = MidiWriter.Utils.stringToBytes(text);
-			event.data = event.data.concat(MidiWriter.Utils.numberToVariableLength(stringBytes.length)); // Size
+			var event = new MetaEvent({ data: [Constants.META_TEXT_ID] });
+			var stringBytes = Utils.stringToBytes(text);
+			event.data = event.data.concat(Utils.numberToVariableLength(stringBytes.length)); // Size
 			event.data = event.data.concat(stringBytes); // Text
 			return this.addEvent(event);
 		}
@@ -2818,9 +2799,9 @@ var Track = function () {
 	}, {
 		key: 'addCopyright',
 		value: function addCopyright(text) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_COPYRIGHT_ID] });
-			var stringBytes = MidiWriter.Utils.stringToBytes(text);
-			event.data = event.data.concat(MidiWriter.Utils.numberToVariableLength(stringBytes.length)); // Size
+			var event = new MetaEvent({ data: [Constants.META_COPYRIGHT_ID] });
+			var stringBytes = Utils.stringToBytes(text);
+			event.data = event.data.concat(Utils.numberToVariableLength(stringBytes.length)); // Size
 			event.data = event.data.concat(stringBytes); // Text
 			return this.addEvent(event);
 		}
@@ -2834,9 +2815,9 @@ var Track = function () {
 	}, {
 		key: 'addTrackName',
 		value: function addTrackName(text) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_TRACK_NAME_ID] });
-			var stringBytes = MidiWriter.Utils.stringToBytes(text);
-			event.data = event.data.concat(MidiWriter.Utils.numberToVariableLength(stringBytes.length)); // Size
+			var event = new MetaEvent({ data: [Constants.META_TRACK_NAME_ID] });
+			var stringBytes = Utils.stringToBytes(text);
+			event.data = event.data.concat(Utils.numberToVariableLength(stringBytes.length)); // Size
 			event.data = event.data.concat(stringBytes); // Text
 			return this.addEvent(event);
 		}
@@ -2850,9 +2831,9 @@ var Track = function () {
 	}, {
 		key: 'addInstrumentName',
 		value: function addInstrumentName(text) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_INSTRUMENT_NAME_ID] });
-			var stringBytes = MidiWriter.Utils.stringToBytes(text);
-			event.data = event.data.concat(MidiWriter.Utils.numberToVariableLength(stringBytes.length)); // Size
+			var event = new MetaEvent({ data: [Constants.META_INSTRUMENT_NAME_ID] });
+			var stringBytes = Utils.stringToBytes(text);
+			event.data = event.data.concat(Utils.numberToVariableLength(stringBytes.length)); // Size
 			event.data = event.data.concat(stringBytes); // Text
 			return this.addEvent(event);
 		}
@@ -2866,9 +2847,9 @@ var Track = function () {
 	}, {
 		key: 'addMarker',
 		value: function addMarker(text) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_MARKER_ID] });
-			var stringBytes = MidiWriter.Utils.stringToBytes(text);
-			event.data = event.data.concat(MidiWriter.Utils.numberToVariableLength(stringBytes.length)); // Size
+			var event = new MetaEvent({ data: [Constants.META_MARKER_ID] });
+			var stringBytes = Utils.stringToBytes(text);
+			event.data = event.data.concat(Utils.numberToVariableLength(stringBytes.length)); // Size
 			event.data = event.data.concat(stringBytes); // Text
 			return this.addEvent(event);
 		}
@@ -2882,9 +2863,9 @@ var Track = function () {
 	}, {
 		key: 'addCuePoint',
 		value: function addCuePoint(text) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_CUE_POINT] });
-			var stringBytes = MidiWriter.Utils.stringToBytes(text);
-			event.data = event.data.concat(MidiWriter.Utils.numberToVariableLength(stringBytes.length)); // Size
+			var event = new MetaEvent({ data: [Constants.META_CUE_POINT] });
+			var stringBytes = Utils.stringToBytes(text);
+			event.data = event.data.concat(Utils.numberToVariableLength(stringBytes.length)); // Size
 			event.data = event.data.concat(stringBytes); // Text
 			return this.addEvent(event);
 		}
@@ -2898,9 +2879,9 @@ var Track = function () {
 	}, {
 		key: 'addLyric',
 		value: function addLyric(lyric) {
-			var event = new MidiWriter.MetaEvent({ data: [MidiWriter.Constants.META_LYRIC_ID] });
-			var stringBytes = MidiWriter.Utils.stringToBytes(lyric);
-			event.data = event.data.concat(MidiWriter.Utils.numberToVariableLength(stringBytes.length)); // Size
+			var event = new MetaEvent({ data: [Constants.META_LYRIC_ID] });
+			var stringBytes = Utils.stringToBytes(lyric);
+			event.data = event.data.concat(Utils.numberToVariableLength(stringBytes.length)); // Size
 			event.data = event.data.concat(stringBytes); // Lyric
 			return this.addEvent(event);
 		}
@@ -2913,7 +2894,7 @@ var Track = function () {
 	}, {
 		key: 'polyModeOn',
 		value: function polyModeOn() {
-			var event = new MidiWriter.NoteOnEvent({ data: [0x00, 0xB0, 0x7E, 0x00] });
+			var event = new NoteOnEvent({ data: [0x00, 0xB0, 0x7E, 0x00] });
 			return this.addEvent(event);
 		}
 	}]);
@@ -3236,17 +3217,17 @@ var Writer = function () {
 
 		this.data = [];
 
-		var trackType = tracks.length > 1 ? MidiWriter.Constants.HEADER_CHUNK_FORMAT1 : MidiWriter.Constants.HEADER_CHUNK_FORMAT0;
-		var numberOfTracks = MidiWriter.Utils.numberToBytes(tracks.length, 2); // two bytes long
+		var trackType = tracks.length > 1 ? Constants.HEADER_CHUNK_FORMAT1 : Constants.HEADER_CHUNK_FORMAT0;
+		var numberOfTracks = Utils.numberToBytes(tracks.length, 2); // two bytes long
 
 		// Header chunk
-		this.data.push(new MidiWriter.Chunk({
-			type: MidiWriter.Constants.HEADER_CHUNK_TYPE,
-			data: trackType.concat(numberOfTracks, MidiWriter.Constants.HEADER_CHUNK_DIVISION) }));
+		this.data.push(new Chunk({
+			type: Constants.HEADER_CHUNK_TYPE,
+			data: trackType.concat(numberOfTracks, Constants.HEADER_CHUNK_DIVISION) }));
 
 		// Track chunks
 		tracks.forEach(function (track, i) {
-			track.addEvent(new MidiWriter.MetaEvent({ data: MidiWriter.Constants.META_END_OF_TRACK_ID }));
+			track.addEvent(new MetaEvent({ data: Constants.META_END_OF_TRACK_ID }));
 			this.data.push(track);
 		}, this);
 	}
@@ -3399,5 +3380,4 @@ function note (num, sharps) {
 exports.toMidi = toMidi;
 exports.note = note;
 
-},{"note-parser":18}]},{},[5])(5)
-});
+},{"note-parser":18}]},{},[5]);

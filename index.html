@@ -68,7 +68,8 @@
 	<button class="inputbtn" id="16notebtn">6<img src="./music_notes_img/16t.png"></button>
 	<button class="inputbtn" id="32notebtn">3<img src="./music_notes_img/32t.png"></button>
 	<button class="inputbtn" id="restbtn">r<img src="./music_notes_img/rest.png"></button>
-	<button class="inputbtn" id="playbtn">r<img src="./music_notes_img/play.png"></button>	
+	<button class="inputbtn" id="playbtn"><img src="./music_notes_img/play.png"></button>	
+	<button class="inputbtn act" id="insertbtn">i</button>
 
 </div>
 	<div id="FileDrop">
@@ -431,6 +432,18 @@ $("body").keydown(function(e){
 						Save();
 				}
 				break;
+			case 73:
+				insertstate = !insertstate;
+				if(insertstate){
+					document.getElementById("insertbtn").classList.add("act");
+				}else{
+					document.getElementById("insertbtn").classList.remove("act");
+				}
+				break;
+			case 8:
+				deleteselected();
+				drawagain();
+				break;
 
 		}
 
@@ -612,10 +625,11 @@ function addStave(){
 
 function deleteselected(){
 	checknotesandselected();
-	for(var i=0 ;i<selected.length-1;i++){
-		for(var j=0 ; j<selected[i].length-1;j++){
+	debugger;
+	for(var i=0 ;i<selected.length;i++){
+		for(var j=0 ; j<selected[i].length;j++){
 			if(selected[i][j] == 1){
-				
+				notes[i].splice(j,1);
 			}
 		}
 	}
@@ -1348,7 +1362,14 @@ function selectedcontain1(){
 					track_names_string += i.toString() + ". " + track_names[i] + '\n' ;
 				}
 				track_names_string += "Please enter the desired number of track to be shown: ";
-				var targettrack = prompt(track_names_string);
+				var targettrack = -1;
+				while(targettrack < 0 || targettrack > tracks.length - 1){
+					if(tracks.length == 1){
+						targettrack = 0;
+					}else{
+						targettrack =  prompt(track_names_string);
+					}
+				}
 				initnotes(targettrack);
 				TooManyTickscheck();
 				drawagain();
@@ -1770,7 +1791,7 @@ function selectedcontain1(){
 			var noteevent;//for saving temporary noteevent
 			var track = new MidiWriter.Track();
 			track.setTimeSignature(bartempo[0],bartempo[1]);
-			track.setTempo(200);
+			track.setTempo(120);
 			//debugger;
 			var w = 0;//variable saving the rest durations, to be the wait parameter in NoteEvent
 			
@@ -1779,7 +1800,7 @@ function selectedcontain1(){
 			// add notes
 			for(var i = 0; i<notesarray.length;i++){
 				if(notesarray[i].isRest()){
-					w += durationToTicks(notesarray[i].duration) / 8;
+					w += durationToTicks(notesarray[i].duration) / 32;
 				}
 				else{
 				var p = notesarray[i].keys;
@@ -1787,6 +1808,9 @@ function selectedcontain1(){
 					p[o] = p[o].replace('/','');
 				}
 				console.log(p);
+				if(w!=0){
+					console.log(w);
+				}
 				noteevent = new MidiWriter.NoteEvent({pitch:p,duration : notesarray[i].duration, wait : w});
 				w = 0;
 				track.addEvent(noteevent);
@@ -1864,6 +1888,10 @@ function selectedcontain1(){
 
 			var x = playline_x + (staves[0].width * (currentcol%4));
 			var y = playline_y + (100 * currentrow);
+			if(percent == 1){
+				x = playline_x;
+				y = playline_y;
+			}
 			console.log(x);
 			console.log(y);
 			l.setAttribute("x1",x);
