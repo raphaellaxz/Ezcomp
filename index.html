@@ -161,7 +161,15 @@ var svg = context.svg;
 var pt = svg.createSVGPoint();
 var l = document.createElementNS("http://www.w3.org/2000/svg","line");
 l.setAttribute("style","stroke:rgb(0,255,0);stroke-width:2");
-var playline_x,playline_y;
+var playline_x = 80;
+var playline_y = 60;
+var playline_d = 80;
+l.setAttribute("x1",playline_x);
+l.setAttribute("x2",playline_x);
+l.setAttribute("y1", playline_y);
+l.setAttribute("y2", playline_y + playline_d);
+l.setAttribute("id", "playline");
+svg.appendChild(l);
 var selected = [];
 var keyarray = ["c","d","e","f","g","a","b"];
 var twelvekeyarray = ["c","c#","d","d#","e","f","f#","g","g#","a","a#","b"];
@@ -190,6 +198,7 @@ var insertstate=true;
 var playstate = false;
 var restkey = ["b/4"];
 var ctrlkey = false;
+var inserted = false;
 
 var player = MIDI.Player;
 
@@ -538,8 +547,8 @@ $(".dropdown").click(function(e){
 			else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: d});
 
 		}
-
 		}
+		inserted = true;
 	}	
 
 
@@ -800,6 +809,7 @@ function drawagain(){
 	staves.forEach(function(s){
 		s.setContext(context).draw();
 	});
+	svg.appendChild(l);
 	updatestyle();
 	for(var i =0; i<voices.length;i++){
 		if(i == 42)
@@ -1818,7 +1828,13 @@ function selectedcontain1(){
 		function PlayMIDI(){
 			//debugger;
 			if(player.currentData == undefined){
-			player.loadFile(initMIDI(),function(){player.start();});
+				player.loadFile(initMIDI(),function(){player.start();});
+			}
+			else if(inserted){
+				player.loadFile(initMIDI(),function(){
+					player.start();
+				});
+				inserted = false;
 			}
 			else if(player.currentTime == player.endTime){
 				player.currentTime = 0;
@@ -1827,7 +1843,7 @@ function selectedcontain1(){
 			else{
 				player.start();
 			}
-			playlineintervalid = setInterval(updateplayline, 50);
+			playlineintervalid = setInterval(updateplayline, 0);
 		}
 
 		function PauseMIDI(){
@@ -1837,7 +1853,25 @@ function selectedcontain1(){
 		}
 
 		function updateplayline(){
-			console.log(player.currentTime/player.endTime);
+			var percent = player.currentTime/player.endTime;
+			var onebarpercent = 1/voices.length;
+			var currentcol = percent / onebarpercent;
+			//debugger;
+			var currentrow = Math.floor((Math.ceil(currentcol)-1)/4);
+			if(currentrow<0){
+				currentrow = 0;
+			}
+
+			var x = playline_x + (staves[0].width * (currentcol%4));
+			var y = playline_y + (100 * currentrow);
+			console.log(x);
+			console.log(y);
+			l.setAttribute("x1",x);
+			l.setAttribute("x2",x);
+			l.setAttribute("y1",y);
+			l.setAttribute("y2",y+playline_d);
+
+
 		}
 
 
