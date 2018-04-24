@@ -22,7 +22,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "static-server",
+    "start": "node server.js",
     "build": "./node_modules/.bin/babel src -d lib"
   },
   "author": "",
