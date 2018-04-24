@@ -81,11 +81,11 @@
 
 	<div id="boo"></div>
 
-	<form name="Form1">
+	<!-- <form name="Form1">
 	POSX: <input type="text" name="posx"><br>
 	POSY: <input type="text" name="posy"><br>
 	key:  <input type="text" name="key"><br>
-	</form>
+	</form> -->
 
 	
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -262,15 +262,13 @@ $(svg).click(function(e) {
 	var dim = svg.getBoundingClientRect();
 	var x = e.clientX-dim.left;
 	var y = e.clientY - dim.top;
-    document.Form1.posx.value = x;
-    document.Form1.posy.value = y;
     var i = checkselected(x,y);
     //console.log(i);
     singleclickselected(i);
     drawagain();
 });
 $("body").keydown(function(e){
-	document.Form1.key.value = e.which;
+	//document.Form1.key.value = e.which;
 
 		switch(e.which){
 			case 37://ArrowLeft
