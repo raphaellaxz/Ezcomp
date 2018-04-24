@@ -151,7 +151,7 @@ VF = Vex.Flow;
 // Create an SVG renderer and attach it to the DIV element named "boo".
 var div = document.getElementById("boo");
 var renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
-var renderWidth = 2000;
+var renderWidth = 2100;
 
 // Configure the rendering context.
 renderer.resize(renderWidth, 1600);
@@ -159,6 +159,9 @@ var context = renderer.getContext();
 context.setFont("Arial", 10, "").setBackgroundFillStyle("#eed");
 var svg = context.svg;
 var pt = svg.createSVGPoint();
+var l = document.createElementNS("http://www.w3.org/2000/svg","line");
+l.setAttribute("style","stroke:rgb(0,255,0);stroke-width:2");
+var playline_x,playline_y;
 var selected = [];
 var keyarray = ["c","d","e","f","g","a","b"];
 var twelvekeyarray = ["c","c#","d","d#","e","f","f#","g","g#","a","a#","b"];
@@ -214,9 +217,17 @@ for(var i=0; i<selected.length;i++){
 	setAll(selected[i], 0);
 }
 
-//disable the default use of arrow and spacebar 
-$(document).ready(function(){
 
+//disable the default use of arrow and spacebar 
+$(function(){
+
+	try{
+	$('body').css('zoom','80%'); /* Webkit browsers */
+  	$('body').css('zoom','0.8'); /* Other non-webkit browsers */
+ 	$('body').css('-moz-transform',scale(0.8, 0.8)); /* Moz-browsers */
+ 	}catch(e){
+ 		if(e.message == "scale is not defined"){}//it is not moz-browsers}/
+ 	}
 	window.addEventListener("keydown", function(e) {
     // space and arrow keys
     if([32, 37, 38, 39, 40, 83].indexOf(e.keyCode) > -1) {
@@ -476,7 +487,11 @@ $(".dropdown").click(function(e){
 						//use the input note to override the current note
 						if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: durationstate+"r"});
 						else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: durationstate });
-						notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :TickToduration(dtick-dstick) +"r"}));
+						//fill up the exceeded duration in bar not included
+						var tofill = TickToduration(dtick-dstick);
+						tofill.result.forEach(function(r){
+							notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :r +"r"}));
+						});
 						typeplace[1]++;
 
 					}else{//use the current note to override the note
@@ -492,8 +507,10 @@ $(".dropdown").click(function(e){
 				if(dstick<dtick){
 					if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: durationstate+"r"});
 					else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: durationstate });
-					notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :TickToduration(dtick-dstick) +"r"}));
-
+					var tofill = TickToduration(dtick-dstick);
+					tofill.result.forEach(function(r){
+						notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :r +"r"}));
+					});
 					}else{
 					if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: d +"r"});	
 					else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: d});
@@ -511,8 +528,10 @@ $(".dropdown").click(function(e){
 		if(dstick<dtick){
 			if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: durationstate+"r"});
 			else notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys:[key+"/"+pitchstate] ,duration: durationstate });
-			notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :TickToduration(dtick-dstick) +"r"}));
-
+			var tofill = TickToduration(dtick-dstick);
+			tofill.result.forEach(function(r){
+				notes[typeplace[0]].splice(typeplace[1]+1,0,new VF.StaveNote({clef: clefstate,keys:restkey,duration :r +"r"}));
+			});
 		}else{
 
 			if(reststate) notes[typeplace[0]][typeplace[1]] = new VF.StaveNote({clef: clefstate ,keys: restkey ,duration: d +"r"});	
@@ -1741,6 +1760,8 @@ function selectedcontain1(){
 			var noteevent;//for saving temporary noteevent
 			var track = new MidiWriter.Track();
 			track.setTimeSignature(bartempo[0],bartempo[1]);
+			track.setTempo(200);
+			//debugger;
 			var w = 0;//variable saving the rest durations, to be the wait parameter in NoteEvent
 			
 			// Define an instrument (optional):
@@ -1793,11 +1814,11 @@ function selectedcontain1(){
 		// 	player = MIDI.Player;
 		// }
 		
-
+		var playlineintervalid;
 		function PlayMIDI(){
-			if(player.currentData === undefined){
-			player.loadFile(initMIDI());
-			player.start();
+			//debugger;
+			if(player.currentData == undefined){
+			player.loadFile(initMIDI(),function(){player.start();});
 			}
 			else if(player.currentTime == player.endTime){
 				player.currentTime = 0;
@@ -1806,11 +1827,17 @@ function selectedcontain1(){
 			else{
 				player.start();
 			}
+			playlineintervalid = setInterval(updateplayline, 50);
 		}
 
 		function PauseMIDI(){
 			player = MIDI.Player;
 			player.pause();
+			clearInterval(playlineintervalid);
+		}
+
+		function updateplayline(){
+			console.log(player.currentTime/player.endTime);
 		}
 
 
