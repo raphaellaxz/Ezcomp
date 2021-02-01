@@ -30,6 +30,16 @@
 <!-- utils -->
 	<script src="./js/util/dom_request_xhr.js" type="text/javascript"></script>
 	<script src="./js/util/dom_request_script.js" type="text/javascript"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.0.0"></script>
+	<script type="text/javascript"> 
+		// Initialize the model.
+		music_rnn = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
+		music_rnn.initialize();
+		// Create a player to play the sequence we'll get from the model.
+		rnnPlayer = new mm.Player();
+		rnn_steps = 100;
+		rnn_temperature = 1.5;
+	</script>
 
 </head>
 <body>
@@ -59,8 +69,8 @@
 	<button class="inputbtn" id="restbtn">r<img src="./music_notes_img/rest.png"></button>
 	<button class="inputbtn" id="playbtn"><img src="./music_notes_img/play.png"></button>	
 	<button class="inputbtn act" id="insertbtn">i</button>
-
 </div>
+Click Enter if you want machine learning to compose for you!
 	<div id="FileDrop">
 		<div id="Text">
 			Drop a midi file here
@@ -172,9 +182,7 @@ new VF.StaveNote({clef: "treble", keys: ["D/4","F#/4","a/4"], duration: "8" }),
 new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "8" }),
 new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "2" }),
 new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "4" })];
-// for(var i=0;i<4;i++){
-// notes[0].push(new VF.StaveNote({clef: "treble", keys: ["d/4"], duration: "q" }));
-// }
+
 
 var voices = [];//list of vocie
 var beams = [];//list of beams
@@ -257,8 +265,6 @@ $(svg).click(function(e) {
     drawagain();
 });
 $("body").keydown(function(e){
-	//document.Form1.key.value = e.which;
-
 		switch(e.which){
 			case 37://ArrowLeft
 				if(selectedcontain1() != false){
@@ -430,6 +436,9 @@ $("body").keydown(function(e){
 			case 8:
 				deleteselected();
 				drawagain();
+				break;
+			case 13://Enter
+				learnAndPlay();
 				break;
 
 		}
@@ -1881,6 +1890,8 @@ function selectedcontain1(){
 			}
 			console.log(x);
 			console.log(y);
+			console.log(notes);
+			console.log(voices);
 			l.setAttribute("x1",x);
 			l.setAttribute("x2",x);
 			l.setAttribute("y1",y);
@@ -1889,6 +1900,59 @@ function selectedcontain1(){
 
 		}
 
+		function learnAndPlay() {
+			if (rnnPlayer.isPlaying()) {
+    			rnnPlayer.stop();
+    			return;
+  			}
+			
+			let input = mapNotesToQuantizedPitches()
+			music_rnn
+			.continueSequence(input, rnn_steps, rnn_temperature)
+			.then((sample) => rnnPlayer.start(sample));
+
+		}
+
+		const keyMap = {"c": 0,"c#": 1,"d": 2,"d#": 3,"e" : 4,"f": 5,"f#": 6,"g": 7,"g#": 8,"a" :9 ,"a#": 10,"b": 11, 
+		"C": 0,"C#": 1,"D": 2,"D#": 3,"E" : 4,"F": 5,"F#": 6,"G": 7,"G#": 8,"A" :9 ,"A#": 10,"B": 11}
+		
+		function mapNotesToQuantizedPitches() {
+			console.log(notes);
+			let jointedNotes = notes.reduce((prev, cur)=> {
+				return [...prev, ...cur]
+			}, 
+			[])
+			jointedNotes = jointedNotes.map((staveNote) => {
+				let keysToPitches = staveNote.keys.map((key) => {
+					const indexOfslash = key.indexOf('/');
+					const keyStr = key.slice(0,indexOfslash);
+					const range = Number.parseInt(key.slice(indexOfslash+1)) + 1
+					return (12*range) + keyMap[keyStr]
+				})
+				return {keys: keysToPitches, duration: Number.parseInt(staveNote.duration), isRest: staveNote.noteType === "r"}
+			})
+			console.log(jointedNotes)
+			let curStep = 0
+			let mapedNotes = jointedNotes.reduce((prev,cur) => {
+				if(cur.isRest){
+					curStep += 16/cur.duration
+					return prev
+				}
+				const tempres = cur.keys.map((key) => {
+					const res = {pitch: key, quantizedStartStep: curStep, quantizedEndStep: curStep + (16/cur.duration)}
+					return res
+				})
+				curStep += 16/cur.duration
+				return [...prev, ...tempres]
+			}, [])
+			console.log(mapedNotes)
+			return {
+				notes: mapedNotes,
+				quantizationInfo: {stepsPerQuarter: 4},
+  				tempos: [{time: 0, qpm: 120}],
+  				totalQuantizedSteps: 1
+			}
+		}
 
 	</script>
 
