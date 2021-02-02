@@ -37,8 +37,30 @@
 		music_rnn.initialize();
 		// Create a player to play the sequence we'll get from the model.
 		rnnPlayer = new mm.Player();
-		rnn_steps = 100;
-		rnn_temperature = 1.5;
+		var qpm = 60;
+		var rnn_steps = 100;
+		var rnn_temperature = 1.5;
+		function onQpmLoad() {
+			document.getElementById("qpm").value = qpm;
+		}
+		function onRnnStepsLoad() {
+			document.getElementById("rnn_steps").value = rnn_steps;
+		}
+		function onRnnTemperatureLoad() {
+			document.getElementById("rnn_temperature").value = rnn_temperature;
+		}
+		function changeQpm() {
+			qpm = Number.parseInt(document.getElementById("qpm").value);
+			console.log(qpm)
+		}
+		function changeRnnSteps() {
+			rnn_steps = Number.parseInt(document.getElementById("rnn_steps").value);
+			console.log(rnn_steps)
+		}
+		function changeRnnTemperature() {
+			rnn_temperature = Number.parseInt(document.getElementById("rnn_temperature").value);
+			console.log(rnn_temperature)
+		}
 	</script>
 
 </head>
@@ -70,7 +92,11 @@
 	<button class="inputbtn" id="playbtn"><img src="./music_notes_img/play.png"></button>	
 	<button class="inputbtn act" id="insertbtn">i</button>
 </div>
-Click Enter if you want machine learning to compose for you!
+Click Enter if you want machine learning to compose for you!<br/>
+qpm: <input id="qpm" type="number" onload="onQpmLoad()" onchange="changeQpm()" />
+rnn_steps: <input id="rnn_steps" type="number" onload="onRnnStepsLoad()" onchange="changeRnnSteps()" />
+rnn_temperature: <input id="rnn_temperature" type="number" onload="onRnnTemperatureLoad()"  onchange="changeRnnTemperature()"/>
+
 	<div id="FileDrop">
 		<div id="Text">
 			Drop a midi file here
@@ -1949,7 +1975,7 @@ function selectedcontain1(){
 			return {
 				notes: mapedNotes,
 				quantizationInfo: {stepsPerQuarter: 4},
-  				tempos: [{time: 0, qpm: 120}],
+  				tempos: [{time: 0, qpm: qpm}],
   				totalQuantizedSteps: 1
 			}
 		}
